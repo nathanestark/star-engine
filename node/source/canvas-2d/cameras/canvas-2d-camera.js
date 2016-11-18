@@ -65,6 +65,11 @@ export default class Canvas2DCamera extends Camera {
         obj.draw(tDelta, this, this.drawContext);
     }
 
+    // Requests that the specified object debug draws itself on the canvas.
+    debugDrawObject(obj, tDelta) {
+        obj.debugDraw(tDelta, this, this.drawContext);
+    }
+
     // Draws anything in the back buffer to the display buffer.    
     drawDoubleBuffer() {
         this.context.drawImage(this.drawCanvas, 0, 0);

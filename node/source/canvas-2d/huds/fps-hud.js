@@ -6,14 +6,17 @@ export default class FPSHud extends TextHud {
         super(properties);
         
         this._weight = 0.9;
-        this._lastTime = 0;
+		this._curTime = 0;
+        this._lastTime = 60;
         this._lastPrint = 0;
         this._lastCalculateTime = 9999;
         this._calculateInterval = 0.5;
     }
 
     draw(tDelta, camera, context) {
-
+		const time = new Date().getTime();
+		tDelta = (time - this._curTime) / 1000;
+		this._curTime = time;
         this._lastTime = (1 / tDelta) * (1.0 - this._weight) + (this._lastTime * this._weight);
 
         this._lastCalculateTime += tDelta;

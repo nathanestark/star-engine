@@ -13,49 +13,15 @@
 	<meta charset="utf-8" />
 
     <link rel="stylesheet" type="text/css" href="./styles/default.css">
-
+    
     <style type="text/css">
-        body {
-            position:relative;
-        }
-        canvas,
-        #controls {
-            width: 50%;
-            height: 50%;
-            float: left;
-            border: 1px solid black;
-        }
-
-        #controls {
-            padding: 15px;
+        html, body, canvas {
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
-    <canvas id="cvsSystem1"></canvas>
-    <canvas id="cvsSystem2"></canvas>
-    <canvas id="cvsSystem3"></canvas>
-    <div id="controls">
-        <div>
-            <label for="tbxTimeScale">Time Scale</label>
-            <input type="number" id="tbxTimeScale" value="100000000" />
-            <input type="button" id="btnPause" value="Pause" />
-        </div>
-        <div>
-            <label for="tbxMinShowRadius">Min Show Radius</label>
-            <input type="number" id="tbxMinShowRadius" value="0" />
-        </div>
-        <div>
-            <label for="tbxObjectScale">Object Scale</label>
-            <input type="number" id="tbxObjectScale" value="1" />
-        </div>
-        <div>
-            <label for="tbxDrawnOrbitLength">Drawn Orbit Length</label>
-            <input type="number" id="tbxDrawnOrbitLength" value="0" />
-            <input type="checkbox" id="cbxDrawOrbitLengthIfSelected">If Selected</input>
-        </div>
-
-    </div>
+    <canvas id="canvas"></canvas>
     <script src="/static/star-engine.js"></script>
 </body>
 </html>

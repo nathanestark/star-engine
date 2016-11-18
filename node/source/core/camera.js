@@ -21,7 +21,12 @@ export default class Camera {
 
     // Requests that the specified object draws itself on the canvas.
     drawObject(obj, tDelta) {
-        obj.draw(tDelta, camera);
+        obj.draw(tDelta, this);
+    }
+    
+    // Requests that the specified object debug draws itself on the canvas.
+    debugDrawObject(obj, tDelta) {
+        obj.debugDraw(tDelta, this);
     }
 
     // If your camera requires double buffering, simply implement 'drawDoubleBuffer' to 

@@ -39,9 +39,9 @@ export default class SolarSystem extends Game {
 
         const worldObjects = new SolarSystemObjects(gravity).objects;
 
-        const camera1 = new Camera(canvases[0], { view: "x", zoom: 0.00000005 });
-        const camera2 = new Camera(canvases[1], { view: "y", zoom: 0.00000005 });
-        const camera3 = new Camera(canvases[2], { view: "z", zoom: 0.00000005 });
+        const camera1 = new Camera(canvases[0], { view: "x", zoom: 0.0000000005 });
+        const camera2 = new Camera(canvases[1], { view: "y", zoom: 0.0000000005 });
+        const camera3 = new Camera(canvases[2], { view: "z", zoom: 0.0000000005 });
 
         const cameras = {
             children: [
@@ -52,8 +52,11 @@ export default class SolarSystem extends Game {
         };
 
         let target = null;
+        let lastTarget = null
         const pos = [0,0];
         document.addEventListener('mousedown', function (e) {
+            lastTarget = e.target;
+            e.target.focus()
             if (e.button == 2) {
                 target = e.target;
                 pos[0] = e.pageX;
@@ -90,6 +93,7 @@ export default class SolarSystem extends Game {
             }
         });
         document.addEventListener('mousewheel', function (e) {
+            lastTarget = e.target;
             let camera = null;
             if (e.target == canvases[0]) {
                 camera = camera1;
@@ -112,6 +116,30 @@ export default class SolarSystem extends Game {
                 return false;
             }
         });
+        document.addEventListener('keydown', function(event) {
+            let camera = null;
+            if (lastTarget == canvases[0]) {
+                camera = camera1;
+            } else if (lastTarget == canvases[1]) {
+                camera = camera2;
+            } else if (lastTarget == canvases[2]) {
+                camera = camera3;
+            }
+            if (camera != null) {
+                let ticks = 0;
+                if(event.which == 107)
+                    ticks = -1;
+                else if(event.which == 109)
+                    ticks = 1;
+
+                camera.zoom[0] *= Math.pow(2, ticks / 5);
+                camera.zoom[1] *= Math.pow(2, ticks / 5);
+
+                e.preventDefault();
+                return false;
+            }
+        });
+
         for(let x=0;x<canvases.length;x++) {
             const canvas = canvases[x];
             const self = this;

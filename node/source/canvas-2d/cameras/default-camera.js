@@ -32,15 +32,18 @@ export default class DefaultCamera extends Canvas2DCamera {
         this.drawContext.setTransform(1, 0, 0, 1, 0, 0);
 
         // Update our canvas's context
+        
+        const hW = this.size.width/2;
+        const hH = this.size.height/2;
 
         // Translate to center of view before rotating or zooming
-        this.drawContext.translate(this.size.width / 2, this.size.height / 2);
+        this.drawContext.translate(hW, hH);
 
         this.drawContext.scale(this.zoom[0], this.zoom[1]);
         this.drawContext.rotate(this.rotation);
 
         // Then translate back.
-        this.drawContext.translate(-this.size.width / 2, -this.size.height / 2);
+        //this.drawContext.translate(-hW, -hH);
 
         // Then position our camera.
         this.drawContext.translate(-this.position[0], -this.position[1]);

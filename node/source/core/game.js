@@ -1,11 +1,14 @@
 export default class Game {
-    constructor() {
-        
+    constructor(properties = {}) {
+        this.debug = false;
+
         /* Set up some 'private' variables. */
         this._curId = 0;
         this._running = false;
         this._paused = false;
         this._curFrame = null;
+		this._timeScale = 1;
+		this._minUpdateTime = 10;
 
         // The tree of all objects in the game for traversal when updating/drawing, and available for other processing.
         this._gameTree = { id:0, children: [] };
@@ -17,8 +20,14 @@ export default class Game {
         this._addingList = [];
         this._removingList = [];
 
-        this._timeScale = 1;
+		if(properties.paused)
+			this._paused = properties.paused;
 
+		if(properties.timeScale)
+			this._timeScale = properties.timeScale;
+
+		if(properties.minUpdateTime)
+			this._minUpdateTime = properties.minUpdateTime;
 
         // Ensure requestAnationFrame and cancelAnimationFrame exists properly.
         let lastTime = 0;
@@ -32,11 +41,11 @@ export default class Game {
         if (!window.requestAnimationFrame)
             window.requestAnimationFrame = function (callback, element) {
                 const curTime = new Date().getTime();
-                const timeToCall = Math.max(0, 16 - (curTime - lastTime));
+                const timeToCall = Math.max(0, this._minUpdateTime - (curTime - lastTime));
                 const id = window.setTimeout(function () { callback(curTime + timeToCall); }, timeToCall);
                 lastTime = curTime + timeToCall;
                 return id;
-            };
+            }.bind(this);
 
         if (!window.cancelAnimationFrame)
             window.cancelAnimationFrame = function (id) {
@@ -360,15 +369,18 @@ export default class Game {
             rootObj = this._gameObjects[id];
         }
 
-        const toRemove = [rootObj];
+        // If it doesn't exist, it has already been removed.
+        if(!rootObj)
+            return;
 
+        const toRemove = [rootObj];
+        
         // Process depth first, removing children before parents.
         while (toRemove.length > 0) {
 
             let obj = toRemove[toRemove.length - 1];
-
             // We don't want to touch children if it is a move. They'll move with the parent.
-            if (!isMove && obj.children != null && obj.children.length > 0) {
+            if (!isMove && obj.children && obj.children.length > 0) {
                 for (let c = 0; c < obj.children.length; c++) {
                     toRemove.push(this._gameObjects[obj.children[c]]);
                 }
@@ -411,10 +423,10 @@ export default class Game {
         // Begin our loop.
         let gameLoop = null;
         let lastTime = null;
-        let game = this;
+		let updateTime = 0;
         gameLoop = function () {
 
-            if (!game._running)
+            if (!this._running)
                 return;
 
             if (lastTime == null)
@@ -422,23 +434,29 @@ export default class Game {
 
             const curTime = new Date().getTime();
 
-            const tDelta = ((curTime - lastTime) / 1000);
+            const elapsed = curTime - lastTime;
             lastTime = curTime;
+			
+			// Process user input.
+			this._processInput();
+		
+			if (!this._paused) {
+			
+				// Only count in updateTime if we aren't paused.
+				updateTime += elapsed;
+				while(updateTime >= this._minUpdateTime) {
+					// Update the world
+					this._update();
+					updateTime -= this._minUpdateTime;
+				}
+			}
 
-            if (tDelta > 0) {
-
-                if (!game._paused) {
-                    // Update the world
-                    game._update(tDelta);
-                }
-
-                // Repaint the world.
-                game._refresh(tDelta);
-            }
+			// Repaint the world.
+			this._refresh(updateTime / this._minUpdateTime);
 
             // Loop again.
-            game._curFrame = window.requestAnimationFrame(gameLoop);
-        };
+            this._curFrame = window.requestAnimationFrame(gameLoop);
+        }.bind(this);
 
         this._running = true;
         this._curFrame = window.requestAnimationFrame(gameLoop);
@@ -454,9 +472,16 @@ export default class Game {
 
     }
 
-    _update(tDelta) {
+	_processInput() {
+		// Check the user Action input queue for any changes
+		// requested by the user, and transfer them into active game changes
+		// to be later acted upon in the update loop.
+	}
+	
+    _update() {
 
-        tDelta *= this._timeScale;
+		// tDelta should be in terms of seconds, so convert from ms.
+        let tDelta = this._minUpdateTime/1000 * this._timeScale;
         this.traverse(this._gameTree, function (obj) {
 
             // Now execute the update of the object (if it wants to be).
@@ -466,7 +491,7 @@ export default class Game {
 
             // If the object has the 'avoidChildrenUpdate' flag, then we
             // should not add the children
-            return !obj.AvoidChildrenUpdate;
+            return !obj.avoidChildrenUpdate;
         });
 
         // Once we're done updating, go ahead and add or remove objects.
@@ -481,7 +506,7 @@ export default class Game {
         this._addingList = [];
     }
 
-    _refresh(tDelta) {
+    _refresh(timeAdvance) {
 
         // Find all cameras.
         const cameraObjects = this.filter("camera");
@@ -489,7 +514,7 @@ export default class Game {
         for (let index in cameraObjects) {
             const camera = cameraObjects[index];
 
-            this._refreshCamera(tDelta, camera);
+            this._refreshCamera(timeAdvance * this._timeScale, camera);
         }
 
         for (let index in cameraObjects) {
@@ -501,7 +526,7 @@ export default class Game {
         }
     }
 
-    _refreshCamera(tDelta, camera){
+    _refreshCamera(timeAdvance, camera){
 
         if (camera.isDisabled)
             return;
@@ -510,7 +535,7 @@ export default class Game {
         camera.clear();
 
         // calc the camera's view
-        camera.calculateView(tDelta);
+        camera.calculateView(timeAdvance);
 
         // Now traverse our tree in order to draw each object.
         // We won't use the Traverse call for this one, as we need more control over pushes an pops
@@ -531,12 +556,12 @@ export default class Game {
                 const obj = this._gameObjects[drawReq.id];
 
                 // First push a restore, if we will be updating.
-                if (obj.draw)
+                if (obj.draw || (this.debug && obj.debugDraw))
                     drawGroup.push({ isRestore: true });
 
                 // If the object has the 'avoidChildrenDrawing' flag, then we
                 // should not add the children
-                if (!obj.AvoidChildrenDrawing && obj.children) {
+                if (!obj.avoidChildrenDrawing && obj.children) {
                     // Otherwise, add it's children in.
                     // Push children into the front so we can continue depth first
                     // (in reverse so their popped in the correct order)
@@ -549,11 +574,16 @@ export default class Game {
 
 
                 // Now execute the draw of the object (if it wants to be).
-                if (obj.draw) {
+                if (obj.draw || (this.debug && obj.debugDraw)) {
                     camera.saveState(); // Always save if we're drawing.
 
                     // Do the drawing.
-                    camera.drawObject(obj, tDelta);
+                    if(obj.draw)
+                        camera.drawObject(obj, timeAdvance);
+
+                    // Do any debug drawing.
+                    if(this.debug && obj.debugDraw) 
+                        camera.debugDrawObject(obj, timeAdvance);
                 }
             }
             // Otherwise, it's a restore.
