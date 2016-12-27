@@ -218,7 +218,7 @@ this.game =game;
         this.surface = null;
     }
 
-    draw(tDelta, camera, context){
+    draw(time, camera, context){
         context.fillStyle = this.color;
         context.beginPath();
         

@@ -38,14 +38,11 @@ export default class Collider {
         }
     }
 
-    debugDraw(tDelta, camera, context){
+    debugDraw(time, camera, context){
         context.fillStyle = this.color;
         context.beginPath();
         
-        let p1 = this.position[0];
-        let p2 = this.position[1];
-
-        context.arc(p1, p2, 0.5 / camera.zoom[0], 0, Math2D.twoPi);
+        context.arc(0, 0, 0.5 / camera.zoom[0], 0, Math2D.twoPi);
         context.fill();
     }
 

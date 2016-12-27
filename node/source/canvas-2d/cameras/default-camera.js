@@ -25,8 +25,8 @@ export default class DefaultCamera extends Canvas2DCamera {
             this.zoom = vec2.fromValues(1,1);
     }
     
-    calculateView(tDelta) {
-        super.calculateView(tDelta);
+    calculateView(time) {
+        super.calculateView(time);
 
         // Reset the context to default.
         this.drawContext.setTransform(1, 0, 0, 1, 0, 0);

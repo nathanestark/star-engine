@@ -22,7 +22,7 @@ export default class BoundingBoxCollider extends Collider {
         }
     }
 
-    debugDraw(tDelta, camera, context){
+    debugDraw(time, camera, context){
         // Don't draw super; replace it with our own drawing.
 
         context.strokeStyle = this.color;

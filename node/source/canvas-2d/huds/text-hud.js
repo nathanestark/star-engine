@@ -27,6 +27,10 @@ export default class TextHud extends Hud {
         else
             this.text = "";
             
+        if(properties.justify)
+            this.justify = properties.justify;
+        else
+            this.justify = 'left';
     }
 
     draw(tDelta, camera, context) {
@@ -38,6 +42,12 @@ export default class TextHud extends Hud {
         // Translate half the font size so we're drawing on the baseline.
         context.translate(0, this.textSize/2);
         
+        // Translate for justification
+        if(this.justify == 'center')
+            context.translate(-context.measureText(this.text).width/2, 0);
+        else if(this.justify == 'right')
+            context.translate(-context.measureText(this.text).width, 0);
+
         context.fillText(this.text, 0, 0);
     }
 }

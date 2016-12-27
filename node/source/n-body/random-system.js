@@ -9,7 +9,7 @@ export default class RandomWorldObjects {
         };
 
         const sPos = vec3.fromValues(0, 0, 0);
-        const m = 10000000000;
+        const m = 2E+30;
         let r = Math.pow(m / (4 * Math.PI / 3), 1 / 3);
         this.objects.children.push(new Body({
             position: sPos,
@@ -25,21 +25,23 @@ export default class RandomWorldObjects {
 
             let mass = Math.random() * m;
             const p = Math.random();
-            if (p < 0.80)
-                mass /= 1000000000;
-            else if (p < 0.90)
-                mass /= 1000000;
-            else if (p < 0.95)
-                mass /= 1000;
+            if (p < 0.85)
+                mass /= 1E+15;
+            else if (p < 0.88)
+                mass /= 1E+9;
+            else if (p < 0.93)
+                mass /= 1E+6;
+            else if (p < 0.96)
+                mass /= 1E+3;
             else if (p < 0.98)
-                mass /= 100;
+                mass /= 1E+2;
             else
-                mass /= 10;
+                mass /= 1E+1;
 
             const c = Math.floor((1-mass) * 10).toFixed(0).toString();
 
             let r = Math.pow(mass / (4 * Math.PI / 3), 1 / 3);
-            const pDist = (Math.random() * 10000000000) + 1000; // But not too close...
+            const pDist = (Math.random() * 1E+12) + 1000; // But not too close...
             const pos = vec3.fromValues(1, 0, 0);
             vec3.scale(pos, pos, pDist);
 

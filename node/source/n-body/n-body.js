@@ -37,8 +37,8 @@ export default class SolarSystem extends Game {
         };
 
 
-        const worldObjects = new SolarSystemObjects(gravity).objects;
-
+//        const worldObjects = new SolarSystemObjects(gravity).objects;
+        const worldObjects = new RandomWorldObjects(gravity).objects;
         const camera1 = new Camera(canvases[0], { view: "x", zoom: 0.0000000005 });
         const camera2 = new Camera(canvases[1], { view: "y", zoom: 0.0000000005 });
         const camera3 = new Camera(canvases[2], { view: "z", zoom: 0.0000000005 });

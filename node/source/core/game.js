@@ -10,6 +10,9 @@ export default class Game {
 		this._timeScale = 1;
 		this._minUpdateTime = 10;
 
+        // All input controllers. Stored separately from game objects because reasons.
+        this._inputControllers = [];
+
         // The tree of all objects in the game for traversal when updating/drawing, and available for other processing.
         this._gameTree = { id:0, children: [] };
         // Map of all object Ids to the objects, prepopulated with the root.
@@ -17,8 +20,9 @@ export default class Game {
         // A map of tags to object Id lists for quick access/categorization outside of the tree.
         this._tagMap = {};
 
-        this._addingList = [];
-        this._removingList = [];
+        this._addingList = []; // No IDs to map yet, so just use an array.
+        this._removingList = new Map(); // Only allow an object to be removed once, so a map.
+        this._moveList = new Map(); // Only allow an object to be moved once, so a map.
 
 		if(properties.paused)
 			this._paused = properties.paused;
@@ -28,6 +32,12 @@ export default class Game {
 
 		if(properties.minUpdateTime)
 			this._minUpdateTime = properties.minUpdateTime;
+
+		if(properties.onGameObjectAdded)
+			this._onGameObjectAdded = properties.onGameObjectAdded;
+
+		if(properties.onGameObjectRemoved)
+			this._onGameObjectRemoved = properties.onGameObjectRemoved;
 
         // Ensure requestAnationFrame and cancelAnimationFrame exists properly.
         let lastTime = 0;
@@ -237,183 +247,353 @@ export default class Game {
         }
     }
 
-    moveGameObject(id, newParent) {
+    moveGameObject(id, newParent, callback) {
         if (id == 0 || id.id == 0)
             throw "Cannot move the root object.";
 
+        // We want to be dealing with the ID.
+        if(typeof(id) === 'object') {
+            id = id.id;
+        }
+
         // Make sure obj is part of the game, and that parent is.
-        if (!this._gameObjects[id])
+        const obj = this._gameObjects[id];
+        if (!obj)
             throw "The specified object has not yet been added into the game.";
 
         if (!this._gameObjects[parent.id])
             throw "The specified parent has not yet been added into the game.";
 
-        // Put in both the _addingList and removing list.
-        this._removingList.push({ id: id, isMove: true });
-        this._addingList.push({ obj: id, parent: newParent });
+        if(!this._removeList.has(id))
+            throw "The specified object is scheduled for removal and cannot be moved.";
+
+        let p = new Promise((resolve, reject) => {
+            this._moveList.set(id, { obj: obj, parent: newParent, resolve: resolve, reject: reject });
+        });
+
+        if(callback) {
+            p = p.then((obj) => {
+                callback(obj);
+
+                return obj;
+            });
+        }
+        return p;
     }
 
     // Adds the specified object into the game, including any tags. If a parent is specified, the object
     // is added to the parent in the object hierarchy. If the object contains children, those children are
     // also properly added.
-    addGameObject(obj, parent) {
+    addGameObject(obj, parent, callback) {
         // Make sure obj is not part of the game, and that parent is.
-        if (this._gameObjects[obj.id])
+        if (obj.id && this._gameObjects[obj.id])
             throw "The specified object to add has an id of '" + obj.id + "' and is already part of the game.";
 
-        this._addingList.push({ obj: obj, parent: parent });
+        // Parent is allowed to not be part of the game yet.
+        // (For instance adding a parent, and then a child in the same frame)
+        if(typeof(parent) === 'function') {
+            parent = 0;
+            callback = parent;
+        } else if(typeof(parent) === 'number') {
+            if(!this._gameObjects[parent])
+                throw "The specified parent has not yet been added into the game.";
+        } else if(typeof(parent) === 'undefined' || parent == null) {
+            parent = 0;
+        } else if(typeof(parent === 'object')) {
+            if(parent.id) {
+                // If the ID is valid, just use that.
+                if(this._gameObjects[parent.id])
+                    parent = parent.id;
+                // Otherwise, we'll assume the parent is waiting to be added.                
+            }
+        } else {
+            throw "The specified parent is not a valid parent object.";
+        }
+
+        // At this point parent is either an ID that exists in the tree,
+        // or an object that doesn't yet.
+
+        let p = new Promise((resolve, reject) => {
+            this._addingList.push({ obj: obj, parent: parent, resolve: resolve, reject: reject });
+        });
+        if(callback) {
+            p = p.then((obj) => {
+                callback(obj);
+
+                return obj;
+            });
+        }
+
+        return p;
     }
 
-    removeGameObject(id) {
+    removeGameObject(id, callback) {
         if(id == 0 || id.id == 0)
             throw "Cannot remove the root object from game.";
 
-        this._removingList.push({ id: id, isMove: false });
+        if(typeof(id) === 'object')
+            id = id.id;
+
+        const obj = this._gameObjects[id];
+        // Cannot remove an object that isn't already in the game.
+        if (!obj)
+            throw "The specified object has not yet been added into the game.";
+
+        // Cannot remove an object that is being moved.
+        if(this._moveList.has(id))
+            throw "The specified object is scheduled for being moved and cannot be removed.";
+
+        let p = new Promise((resolve, reject) => {
+            this._removingList.set(id, { obj: obj, resolve: resolve, reject: reject });
+        });
+        
+        if(callback) {
+            p = p.then((obj) => {
+                callback(obj);
+
+                return obj;
+            });
+        }
+        return p;
     }
 
     setTimeScale(tScale) {
         this._timeScale = tScale;
     }
 
+    onGameObjectAdded(obj) {
+
+    }
+
+    onGameObjectRemoved(obj) {
+
+    }
+
+    onGameObjectMoved(obj) {
+
+    }
+
+    addInputController(controller) {
+        this._inputControllers.push(controller);
+    }
+
+    removeInputController(controller) {
+        // Can't do it for now
+    }
+
 
     /* Private Functions */
 
-    _addGameObject(obj, parent) {
+    _addGameObject(obj, parent, resolve, reject) {
 
-        // If parent is an id, translate to the actual object
-        if (typeof (parent) === "undefined" || parent == null)
-            parent = this._gameTree; // Parent not specified, so stick us in the root.
-        else if (typeof (parent) === "number") // ParentId, so translate
-            parent = this._gameObjects[parent];
-        else // Treat anything else as unspecified
-            parent = this._gameTree;
+        // Find the parent object.
+        let parentId = 0;
+        if(typeof(parent) === 'number')
+            parentId = parent;
+        else if(typeof(parent) === 'object')
+            parentId = parent.id;
+        
+        parent = this._gameObjects[parentId];
 
-        // The parent may have been removed before it could be added. In this case just return.
-        if (!this._gameObjects[parent.id])
+        if(!parent) {
+            // The parent may have been removed before it could be added. In this case just return.
+            reject("Parent does not exist");
             return;
-
-        const isMove = typeof (obj) === 'number';
-        if (isMove)
-            obj = this._gameObjects[obj];
+        }
 
         const toAdd = [{ obj: obj, parent: parent }];
 
+        const added = [];
         while (toAdd.length > 0) {
 
             const cur = toAdd.pop();
 
-            // If it is a move, we don't need to generate an id, and we don't need to 
-            // add to _gameObjects.
-            if (!isMove) {
-                let id = null;
-                // Generate the next available Id.
-                {
-                    // Verify it is available
-                    while (id == null || this._gameObjects[id] === 'undefined') {
-                        // Increment (with overflow looping)
-                        if (this._curId == Number.MAX_VALUE)
-                            this._curId == Number.MIN_VALUE;
-                        else
-                            this._curId = this._curId + 1;
-                        id = this._curId;
-                    }
+            let id = null;
+            // Generate the next available Id.
+            {
+                // Verify it is available
+                while (id == null || this._gameObjects[id] === 'undefined') {
+                    // Increment (with overflow looping)
+                    if (this._curId == Number.MAX_VALUE)
+                        this._curId == Number.MIN_VALUE;
+                    else
+                        this._curId = this._curId + 1;
+                    id = this._curId;
                 }
-                cur.obj.id = id;
-
-                // Add to the _gameObjects.
-                this._gameObjects[cur.obj.id] = cur.obj;
             }
+            cur.obj.id = id;
+
+            // Add to the _gameObjects.
+            this._gameObjects[cur.obj.id] = cur.obj;
+            added.push[cur.obj];
 
             // Add to the _gameTree.
             if (!cur.parent.children)
                 cur.parent.children = [];
             cur.parent.children.push(cur.obj.id);
-            cur.obj.ParentId = cur.parent.id;
+            cur.obj.parentId = cur.parent.id;
 
-            // Tags should be already delt with as well.
-            // Children should be set up properly since it is a move.
-            if (!isMove) {
-                // Add in any tags.
-                if (cur.obj.tags) {
-                    const args = cur.obj.tags;
-                    delete cur.obj.tags;
-                    args.unshift(cur.obj);
-                    this.addTags.apply(this, args);
-                }
-                if (cur.obj.classTags) { // Check their 'object level tags' too, but don't delete them.
-                    const args = cur.obj.classTags.slice(0);
-                    args.unshift(cur.obj);
-                    this.addTags.apply(this, args);
-                }
+            // Add in any tags.
+            if (cur.obj.tags) {
+                const args = cur.obj.tags;
+                delete cur.obj.tags;
+                args.unshift(cur.obj);
+                this.addTags.apply(this, args);
+            }
+            if (cur.obj.classTags) { // Check their 'object level tags' too, but don't delete them.
+                const args = cur.obj.classTags.slice(0);
+                args.unshift(cur.obj);
+                this.addTags.apply(this, args);
+            }
 
-                // Then process any children specified.
-                if (cur.obj.children != null) {
-                    for (let c = 0; c < cur.obj.children.length; c++) {
-                        const child = cur.obj.children[c]
-                        toAdd.push({ obj: child, parent: cur.obj });
-                    }
-                    // Clear out children now that we're part of the tree.
-                    cur.obj.children = [];
+            // Then process any children specified.
+            if (cur.obj.children != null) {
+                for (let c = 0; c < cur.obj.children.length; c++) {
+                    const child = cur.obj.children[c]
+                    toAdd.push({ obj: child, parent: cur.obj });
                 }
+                // Clear out children now that we're part of the tree.
+                cur.obj.children = [];
             }
         }
+
+        for(let x=0;x<added.length;x++) {
+            this.onGameObjectAdded(added[x]);
+            if(this._onGameObjectAdded)
+                this._onGameObjectAdded(added[x]);
+        }
+        resolve(obj);
     }
 
-    _removeGameObject(id, isMove) {
-
-        let rootObj = id;
-        if (typeof (id) === 'object') {
-            id = id.id;
-        }
-        else {
-            rootObj = this._gameObjects[id];
-        }
+    _removeGameObject(obj, resolve, reject) {
 
         // If it doesn't exist, it has already been removed.
-        if(!rootObj)
+        // This will typically be because the parent was removed.
+        // No need to fire events, since it was already removed and an event fired
+        // for it.
+        if(!this._gameObjects[obj.id]) {
+            resolve(obj)
             return;
+        }
 
-        const toRemove = [rootObj];
+        const toRemove = [obj];
         
+        const removed = [];
+
         // Process depth first, removing children before parents.
         while (toRemove.length > 0) {
 
             let obj = toRemove[toRemove.length - 1];
-            // We don't want to touch children if it is a move. They'll move with the parent.
-            if (!isMove && obj.children && obj.children.length > 0) {
+
+            // Go through children and remove them first.
+            if (obj.children && obj.children.length > 0) {
                 for (let c = 0; c < obj.children.length; c++) {
                     toRemove.push(this._gameObjects[obj.children[c]]);
                 }
             } else {
-                // This one has no children (or is a move) and is ready to be removed.
+                // This one has no children and is ready to be removed.
                 obj = toRemove.pop();
 
                 // Remove tags.
-                if (!isMove) { // No need to remove tags if it is a move.
-                    if (obj.tags && obj.tags.length > 0) {
-                        const args = obj.tags.splice(0);
-                        args.unshift(obj);
-                        this.removeTags.apply(this, args);
-                    }
+                if (obj.tags && obj.tags.length > 0) {
+                    const args = obj.tags.splice(0);
+                    args.unshift(obj);
+                    this.removeTags.apply(this, args);
                 }
 
                 // Remove from tree
 
                 // First remove from parent's children collection
-                const parent = this._gameObjects[obj.ParentId];
-                const index = parent.children.indexOf(obj.id);
-                if (index >= 0)
-                    parent.children.splice(index, 1);
-                // Then remove parent reference.
-                delete obj.ParentId;
+                const parent = this._gameObjects[obj.parentId];
+                if(parent != null) {
+                    const index = parent.children.indexOf(obj.id);
+                    if (index > -1)
+                        parent.children.splice(index, 1);
+                    // Then remove parent reference.
+                    delete obj.parentId;
+                }
 
 
                 // Remove from game objects
-                if (!isMove) // If it is a move, don't remove from _gameObjects
-                    delete this._gameObjects[id];
+                delete this._gameObjects[obj.id];
+
+                removed.push(obj);
             }
         }
+        
+        for(let x=0;x<removed.length;x++) {
+            this.onGameObjectRemoved(removed[x]);
+            if(this._onGameObjectRemoved)
+                this._onGameObjectRemoved(removed[x]);
+        }
+        resolve(obj);
     }
+
+    
+    _moveGameObject(obj, parentId, resolve, reject) {
+
+        const id = obj.id;
+        const newParent = this._gameObjects[parentId];
+
+        let oldParent = null;
+
+        let p = null;
+        // If it doesn't exist, it has already been removed.
+        if(!newParent) {
+            // If our target parent was removed, then we can treated
+            // this as a normal 'remove'.
+
+            p = new Promise((resolve, reject) => {
+                this._removeGameObject(id, resolve, reject);
+            });
+        } 
+        // Look up by id. This helps us check if it still exists or not.
+        // If it doesn't exist, it has already been removed.
+        else if(!this._gameObjects[id]) {
+            // So in this case, we need to just be treated as an add to the parent.
+            // Chances are, our parent was removed and us with it.
+            p = new Promise((resolve, reject) => {
+                this._addGameObject(obj, parentId, resolve, reject);
+            });
+        } else {
+
+            // Should be as easy as taking the object, and changing it's parents.
+            // The children should all stay the same.
+             oldParent = this._gameObjects[obj.parentId];
+            if(parent != null) {
+                const index = oldParent.children.indexof(id);
+                if(index > -1)
+                    parent.children.splice(index, 1);
+            }
+
+            // Add to new parent.
+            newParent.children.push(id);
+
+            // Update parent reference.
+            obj.parentId = parentId;
+        }        
+
+        if(p) {
+            p.then(() => {
+                this.onGameObjectMoved(obj, oldParent, newParent);
+                if(this._onGameObjectMoved)
+                    this._onGameObjectMoved(obj, oldParent, newParent);
+
+                resolve(obj);
+            })
+            .catch((exception) => {
+                reject(exception);
+            });
+        } else {
+            this.onGameObjectMoved(obj, oldParent, newParent);
+            if(this._onGameObjectMoved)
+                this._onGameObjectMoved(obj, oldParent, newParent);
+
+            resolve(obj);
+        }
+    }
+
+    
 
     _start() {
 
@@ -424,6 +604,7 @@ export default class Game {
         let gameLoop = null;
         let lastTime = null;
 		let updateTime = 0;
+        let animationTime = 0;
         gameLoop = function () {
 
             if (!this._running)
@@ -435,24 +616,40 @@ export default class Game {
             const curTime = new Date().getTime();
 
             const elapsed = curTime - lastTime;
-            lastTime = curTime;
-			
+            lastTime = curTime;			
+
 			// Process user input.
 			this._processInput();
 		
 			if (!this._paused) {
+
+                // tDelta should be in terms of seconds, so convert from ms.
+                let tDelta = this._minUpdateTime/1000 * this._timeScale;
 			
 				// Only count in updateTime if we aren't paused.
 				updateTime += elapsed;
+                animationTime += elapsed;
+
+                // If it is taking us too long, just skip some updates.
+                // :(
+                if(updateTime > this._minUpdateTime*100)
+                    updateTime = 0;
+
 				while(updateTime >= this._minUpdateTime) {
 					// Update the world
-					this._update();
+					this._update(tDelta);
 					updateTime -= this._minUpdateTime;
 				}
 			}
 
 			// Repaint the world.
-			this._refresh(updateTime / this._minUpdateTime);
+			this._refresh({
+                timeAdvance: updateTime/1000 * this._timeScale,
+                timeScale: this._timeScale,
+                animationTime: animationTime,
+                curTime: curTime,
+                lastTime: lastTime
+            });
 
             // Loop again.
             this._curFrame = window.requestAnimationFrame(gameLoop);
@@ -473,15 +670,14 @@ export default class Game {
     }
 
 	_processInput() {
-		// Check the user Action input queue for any changes
-		// requested by the user, and transfer them into active game changes
-		// to be later acted upon in the update loop.
+        // update all controllers, which will trigger any necessary binds.
+        for(let i = 0; i < this._inputControllers.length; i++) {
+            this._inputControllers[i].update();
+        }
 	}
 	
-    _update() {
+    _update(tDelta) {
 
-		// tDelta should be in terms of seconds, so convert from ms.
-        let tDelta = this._minUpdateTime/1000 * this._timeScale;
         this.traverse(this._gameTree, function (obj) {
 
             // Now execute the update of the object (if it wants to be).
@@ -495,18 +691,23 @@ export default class Game {
         });
 
         // Once we're done updating, go ahead and add or remove objects.
-        // Remove first then add, in case they wanted to move an object's location.
-        for (let a = 0; a < this._removingList.length; a++) {
-            this._removeGameObject(this._removingList[a].id, this._removingList[a].isMove);
+        // Order shouldn't matter here, but we'll remove, move, then add.
+        for (let [key, value] of this._removingList) {
+            this._removeGameObject(value.obj, value.resolve, value.reject);
+        }
+        for (let [key, value] of this._moveList) {
+            this._moveGameObject(value.obj, value.parent, value.resolve, value.reject);
         }
         for (let a = 0; a < this._addingList.length; a++) {
-            this._addGameObject(this._addingList[a].obj, this._addingList[a].parent);
+            const obj = this._addingList[a];
+            this._addGameObject(obj.obj, obj.parent, obj.resolve, obj.reject);
         }
-        this._removingList = [];
+        this._removingList.clear();
+        this._moveList.clear();
         this._addingList = [];
     }
 
-    _refresh(timeAdvance) {
+    _refresh(time) {
 
         // Find all cameras.
         const cameraObjects = this.filter("camera");
@@ -514,7 +715,7 @@ export default class Game {
         for (let index in cameraObjects) {
             const camera = cameraObjects[index];
 
-            this._refreshCamera(timeAdvance * this._timeScale, camera);
+            this._refreshCamera(time, camera);
         }
 
         for (let index in cameraObjects) {
@@ -526,7 +727,7 @@ export default class Game {
         }
     }
 
-    _refreshCamera(timeAdvance, camera){
+    _refreshCamera(time, camera){
 
         if (camera.isDisabled)
             return;
@@ -535,7 +736,7 @@ export default class Game {
         camera.clear();
 
         // calc the camera's view
-        camera.calculateView(timeAdvance);
+        camera.calculateView(time);
 
         // Now traverse our tree in order to draw each object.
         // We won't use the Traverse call for this one, as we need more control over pushes an pops
@@ -548,7 +749,6 @@ export default class Game {
         while (drawGroup.length > 0) {
             // Grab the next draw request.
             const drawReq = drawGroup.pop();
-
             // Is this an object?
             if(typeof(drawReq.id) === 'number') {
 
@@ -564,8 +764,7 @@ export default class Game {
                 if (!obj.avoidChildrenDrawing && obj.children) {
                     // Otherwise, add it's children in.
                     // Push children into the front so we can continue depth first
-                    // (in reverse so their popped in the correct order)
-                    for (let i = obj.children.length - 1; i >= 0; i--) {
+                    for (let i = obj.children.length-1; i >= 0; i--) {
                         
                         // Push the child.
                         drawGroup.push({ id: obj.children[i]});
@@ -579,11 +778,11 @@ export default class Game {
 
                     // Do the drawing.
                     if(obj.draw)
-                        camera.drawObject(obj, timeAdvance);
+                        camera.drawObject(obj, time);
 
                     // Do any debug drawing.
                     if(this.debug && obj.debugDraw) 
-                        camera.debugDrawObject(obj, timeAdvance);
+                        camera.debugDrawObject(obj, time);
                 }
             }
             // Otherwise, it's a restore.

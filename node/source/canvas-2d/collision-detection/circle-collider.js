@@ -20,14 +20,14 @@ export default class CircleCollider extends Collider {
         }
     }
 
-    debugDraw(tDelta, camera, context){
+    debugDraw(time, camera, context){
         // Don't draw super; replace it with our own drawing.
         
         context.strokeStyle = this.color;
         context.lineWidth = 0.5 / camera.zoom[0];
         context.beginPath();
         
-        context.arc(this.position[0], this.position[1], this.radius, 0, Math2D.twoPi);
+        context.arc(0, 0, this.radius, 0, Math2D.twoPi);
         context.stroke();
     }
 

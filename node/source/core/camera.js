@@ -20,13 +20,13 @@ export default class Camera {
     restoreState() {}
 
     // Requests that the specified object draws itself on the canvas.
-    drawObject(obj, tDelta) {
-        obj.draw(tDelta, this);
+    drawObject(obj, time) {
+        obj.draw(time, this);
     }
     
     // Requests that the specified object debug draws itself on the canvas.
-    debugDrawObject(obj, tDelta) {
-        obj.debugDraw(tDelta, this);
+    debugDrawObject(obj, time) {
+        obj.debugDraw(time, this);
     }
 
     // If your camera requires double buffering, simply implement 'drawDoubleBuffer' to 

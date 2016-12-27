@@ -45,7 +45,7 @@ export default class Canvas2DCamera extends Camera {
 
     // Performs any transforms or calculations required to set up this camera's
     // view based on it's updated properties.
-    calculateView(tDelta) {
+    calculateView(time) {
         this._fitToContainer();
     }
 
@@ -61,13 +61,13 @@ export default class Canvas2DCamera extends Camera {
     }
 
     // Requests that the specified object draws itself on the canvas.
-    drawObject(obj, tDelta) {
-        obj.draw(tDelta, this, this.drawContext);
+    drawObject(obj, time) {
+        obj.draw(time, this, this.drawContext);
     }
 
     // Requests that the specified object debug draws itself on the canvas.
-    debugDrawObject(obj, tDelta) {
-        obj.debugDraw(tDelta, this, this.drawContext);
+    debugDrawObject(obj, time) {
+        obj.debugDraw(time, this, this.drawContext);
     }
 
     // Draws anything in the back buffer to the display buffer.    

@@ -62,7 +62,7 @@ export default class Body {
         this.totalForce = vec3.create();
     }
 
-    draw(tDelta, camera, context){
+    draw(time, camera, context){
         context.fillStyle = this.color;
         context.beginPath();
         

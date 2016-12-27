@@ -69,12 +69,12 @@ export default class CollisionDetection {
         }
     }
 
-    debugDraw(tDelta, camera, context){
+    debugDraw(time, camera, context){
 
         if(this.quadTree) {
             let subDraw = function(qt) {
                 context.strokeStyle = "red";
-                context.lineWidth = 0.01;
+                context.lineWidth = 0.5 / camera.zoom[0];
                 context.strokeRect(qt.bounds[0][0], 
                                 qt.bounds[0][1], 
                                 qt.bounds[1][0] - qt.bounds[0][0], 
