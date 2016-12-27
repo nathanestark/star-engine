@@ -110,7 +110,7 @@ this.game =game;
         // Calculate new velocity for after the collision, and update our velocity.
         if(otherObj.parent instanceof Ball) {
             
-/*            Math2D.calculateElasticCollisionVelocity(this.velocity, 
+            Math2D.calculateElasticCollisionVelocity(this.velocity, 
                                                     this.velocity,
                                                     normal,
                                                     this.elasticity * otherObj.parent.elasticity,
@@ -118,8 +118,7 @@ this.game =game;
                                                     thisObj.parent.mass,
                                                     otherObj.velocity,
                                                     otherObj.parent.mass);
-            */                                        
-            Math2D.calculateInelasticCollisionVelocity(this.velocity, 
+/*            Math2D.calculateInelasticCollisionVelocity(this.velocity, 
                                                     this.velocity,
                                                     normal,
                                                     thisObj.velocity,
@@ -129,7 +128,7 @@ this.game =game;
                                                     
             otherObj.parent.removed = true;
             this.game.removeGameObject(otherObj.parent.id);
-                                                    
+*/                                                    
         } else {
             Math2D.calculateElasticCollisionVelocity(this.velocity, 
                                                     this.velocity,

@@ -5,7 +5,7 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const baseConfig = {
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: 'star-engine.js',
+    filename: '[name].js',
     publicPath: '/static/',
     libraryTarget: 'umd',
     library: ['starengine']
@@ -61,7 +61,9 @@ const baseConfig = {
 }
 
 const productionConfig = Object.assign({}, baseConfig, {
-  entry: { prod: './source/index.js' },
+  entry: { 
+    "star-engine": './source/star-engine.js',
+  },
   plugins: baseConfig.plugins.concat([
     new webpack.optimize.UglifyJsPlugin({
       minimize: true,
@@ -83,7 +85,12 @@ const configs = {
       }),
     ]),
     devtool: 'inline-source-map',
-    entry: { dev: './source/index.js' },
+    entry: { 
+//      "star-engine": './source/star-engine.js',
+      "n-body": './source/n-body.js', 
+      "bouncing-balls": './source/bouncing-balls.js', 
+      "asteroids": './source/asteroids.js',
+    },
   }),
 }
 
