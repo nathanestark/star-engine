@@ -2,6 +2,7 @@ import {vec2, vec3, quat} from 'gl-matrix';
 
 import Game from '../core/game';
 import Camera from './default-camera';
+import FollowCamera from './follow-camera';
 import FPSHud from '../canvas-2d/huds/fps-hud';
 import ObjectCountHud from './object-count-hud';
 import Gravity from './gravity';
@@ -9,6 +10,7 @@ import Collider from './collider';
 import Body from './body';
 
 import RandomWorldObjects from './random-system';
+import ResonenceWorldObjects from './resonence-system';
 import SolarSystemObjects from './solar-system';
 
 export default class SolarSystem extends Game {
@@ -38,16 +40,42 @@ export default class SolarSystem extends Game {
 
 
 //        const worldObjects = new SolarSystemObjects(gravity).objects;
-        const worldObjects = new RandomWorldObjects(gravity).objects;
+//        const worldObjects = new RandomWorldObjects(gravity).objects;
+        const worldObjects = new ResonenceWorldObjects(gravity).objects;
+        worldObjects.childrenSort = (camera, children) => {
+            // Sort children by view depth.
+            let ret = children.slice();
+
+            ret.sort((a, b) => {
+                if (camera.view == "x") {
+                    return a.position[2] - b.position[2];
+                } else if (camera.view == "y") {
+                    return a.position[1] - b.position[1];
+                } else if (camera.view == "z") {
+                    return a.position[0] - b.position[0];
+                }
+            });
+
+            return ret;
+        };
+
         const camera1 = new Camera(canvases[0], { view: "x", zoom: 0.0000000005 });
+        const fCamera1 = new FollowCamera(canvases[0], { view: "x", zoom: 0.0000000005, disabled: true });
         const camera2 = new Camera(canvases[1], { view: "y", zoom: 0.0000000005 });
+        const fCamera2 = new FollowCamera(canvases[1], { view: "y", zoom: 0.0000000005, disabled: true });
         const camera3 = new Camera(canvases[2], { view: "z", zoom: 0.0000000005 });
+        const fCamera3 = new FollowCamera(canvases[2], { view: "z", zoom: 0.0000000005, disabled: true });
+
+        fCamera1.isDisabled = fCamera2.isDisabled = fCamera3.isDisabled = true;
 
         const cameras = {
             children: [
                 camera1,
+                fCamera1,
                 camera2,
-                camera3
+                fCamera2,
+                camera3,
+                fCamera3
             ]
         };
 
@@ -78,63 +106,75 @@ export default class SolarSystem extends Game {
 
         document.addEventListener('mousemove', function (e) {
             let camera = null;
+            let fCamera = null;
             if (target == canvases[0]) {
                 camera = camera1;
+                fCamera = fCamera1;
             } else if (target == canvases[1]) {
                 camera = camera2;
+                fCamera = fCamera2;
             } else if (target == canvases[2]) {
                 camera = camera3;
+                fCamera = fCamera3;
             }
-            if(camera != null) {
+            if(camera != null && !camera.isDisabled) {
                 camera.position[0] -= (e.pageX - pos[0]) / camera.zoom[0];
                 camera.position[1] -= (e.pageY - pos[1]) / camera.zoom[1];
+                pos[0] = e.pageX;
+                pos[1] = e.pageY;
+            } else if(fCamera != null && !fCamera.isDisabled) {
+                fCamera.offset[0] -= (e.pageX - pos[0]) / fCamera.zoom[0];
+                fCamera.offset[1] -= (e.pageY - pos[1]) / fCamera.zoom[1];
                 pos[0] = e.pageX;
                 pos[1] = e.pageY;
             }
         });
         document.addEventListener('mousewheel', function (e) {
             lastTarget = e.target;
-            let camera = null;
+            let cameras = [];
             if (e.target == canvases[0]) {
-                camera = camera1;
+                cameras.push(camera1);
+                cameras.push(fCamera1);
             } else if (e.target == canvases[1]) {
-                camera = camera2;
+                cameras.push(camera2);
+                cameras.push(fCamera2);
             } else if (e.target == canvases[2]) {
-                camera = camera3;
+                cameras.push(camera3);
+                cameras.push(fCamera3);
             }
-            if (camera != null) {
+            cameras.forEach((c) => {
                 let ticks = e.wheelDelta / 120;
                 //if(ticks > 0) {
-                    camera.zoom[0] *= Math.pow(2, ticks / 5);
-                    camera.zoom[1] *= Math.pow(2, ticks / 5);
+                    c.zoom[0] *= Math.pow(2, ticks / 5);
+                    c.zoom[1] *= Math.pow(2, ticks / 5);
                 //}
                 //else if(ticks < 0) {
                 //    camera.zoom[0] /= Math.Pow(2, -ticks);
                 //    camera.zoom[1] /= Math.Pow(2, -ticks);
                 //}
-                e.preventDefault();
-                return false;
-            }
+            });
+            e.preventDefault();
+            return false;
         });
-        document.addEventListener('keydown', function(event) {
-            let camera = null;
-            if (lastTarget == canvases[0]) {
-                camera = camera1;
-            } else if (lastTarget == canvases[1]) {
-                camera = camera2;
-            } else if (lastTarget == canvases[2]) {
-                camera = camera3;
-            }
-            if (camera != null) {
-                let ticks = 0;
-                if(event.which == 107)
-                    ticks = -1;
-                else if(event.which == 109)
-                    ticks = 1;
+        document.addEventListener('keydown', function(e) {
+            if(e.which == 107 || e.which == 109) {
+                let cameras = [];
+                if (e.target == canvases[0]) {
+                    cameras.push(camera1);
+                    cameras.push(fCamera1);
+                } else if (e.target == canvases[1]) {
+                    cameras.push(camera2);
+                    cameras.push(fCamera2);
+                } else if (e.target == canvases[2]) {
+                    cameras.push(camera3);
+                    cameras.push(fCamera3);
+                }
+                cameras.forEach((c) => {
+                    const ticks = e.which == 107 ? -1 : 1;
 
-                camera.zoom[0] *= Math.pow(2, ticks / 5);
-                camera.zoom[1] *= Math.pow(2, ticks / 5);
-
+                    c.zoom[0] *= Math.pow(2, ticks / 5);
+                    c.zoom[1] *= Math.pow(2, ticks / 5);
+                });
                 e.preventDefault();
                 return false;
             }
@@ -142,22 +182,21 @@ export default class SolarSystem extends Game {
 
         for(let x=0;x<canvases.length;x++) {
             const canvas = canvases[x];
-            const self = this;
-            canvas.addEventListener('click', function (e) {
+            canvas.addEventListener('click', (e) => {
                 let camera = null;
                 if (e.target == canvases[0]) {
-                    camera = camera1;
+                    camera = camera1.isDisabled ? fCamera1 : camera1;
                 } else if (e.target == canvases[1]) {
-                    camera = camera2;
+                    camera = camera2.isDisabled ? fCamera2 : camera2;
                 } else if (e.target == canvases[2]) {
-                    camera = camera3;
+                    camera = camera3.isDisabled ? fCamera3 : camera3;
                 }
                 if (camera != null) {
                     // Convert to world
                     const posA = camera.position[0] + (e.offsetX - camera.size.width / 2) / camera.zoom[0];
                     const posB = camera.position[1] + (e.offsetY - camera.size.height / 2) / camera.zoom[1];
 
-                    const bodies = self.filter("worldObject");
+                    const bodies = this.filter("body");
                     let best = null;
 
                     const pClick = vec2.fromValues(posA, posB);
@@ -179,17 +218,23 @@ export default class SolarSystem extends Game {
                         }
                     }
 
-                    if (self.selected) {
-                        self.selected.selected = false;
-                        if (self.drawOrbitLengthSelectedOnly)
-                            self.selected.maxSavedPositions = 0;
+                    if (this.selected) {
+                        this.selected.selected = false;
+                        if (this.drawOrbitLengthSelectedOnly)
+                        this.selected.maxSavedPositions = 0;
                     }
                     if (best != null) {
                         best.selected = true;
-                        self.selected = best;
+                        this.selected = best;
 
-                        if (self.drawOrbitLengthSelectedOnly)
-                            self.selected.maxSavedPositions = self.drawnOrbitLength;
+                        if (this.drawOrbitLengthSelectedOnly)
+                        this.selected.maxSavedPositions = this.drawnOrbitLength;
+
+
+                        // Swap camera to focus on this object.
+                        camera1.isDisabled = camera2.isDisabled = camera3.isDisabled = true;
+                        fCamera1.isDisabled = fCamera2.isDisabled = fCamera3.isDisabled = false;
+                        fCamera1.target = fCamera2.target = fCamera3.target = this.selected;
                     }
                 }
                 e.preventDefault();
@@ -229,7 +274,7 @@ export default class SolarSystem extends Game {
 
         // If we we were showing everyone previously, set them all to 0.
         if (!this.drawOrbitLengthSelectedOnly) {
-            this.filter('worldObject').forEach(function (b) {
+            this.filter('body').forEach(function (b) {
                 b.maxSavedPositions = 0;
             });
         }
@@ -240,7 +285,7 @@ export default class SolarSystem extends Game {
 
         // If we're showing everybody now...
         if (!this.drawOrbitLengthSelectedOnly) {
-            this.filter('worldObject').forEach(function (b) {
+            this.filter('body').forEach(function (b) {
                 b.maxSavedPositions = val;
             });
         } else if(this.selected) {

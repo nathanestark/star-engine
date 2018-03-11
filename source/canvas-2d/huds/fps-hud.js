@@ -16,13 +16,17 @@ export default class FPSHud extends TextHud {
     draw(tDelta, camera, context) {
 		const time = new Date().getTime();
 		tDelta = (time - this._curTime) / 1000;
-		this._curTime = time;
-        this._lastTime = (1 / tDelta) * (1.0 - this._weight) + (this._lastTime * this._weight);
+        if(tDelta)
+        {
+            this._curTime = time;
+            this._lastTime = (1 / tDelta) * (1.0 - this._weight) + (this._lastTime * this._weight);
 
-        this._lastCalculateTime += tDelta;
-        if (this._lastCalculateTime >= this._calculateInterval) {
-            this._lastCalculateTime = 0;
-            this._lastPrint = this._lastTime;
+            this._lastCalculateTime += tDelta;
+            if (this._lastCalculateTime >= this._calculateInterval) {
+                this._lastCalculateTime = 0;
+                this._lastPrint = this._lastTime;
+
+            }
         }
         this.text = "FPS: " + this._lastPrint.toFixed(0);
 

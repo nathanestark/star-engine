@@ -709,8 +709,8 @@ export default class Game {
 
     _refresh(time) {
 
-        // Find all cameras.
-        const cameraObjects = this.filter("camera");
+        // Find all (enabled) cameras.
+        const cameraObjects = this.filter("camera").filter((c) => !c.isDisabled);
         // Render everything for each camera.
         for (let index in cameraObjects) {
             const camera = cameraObjects[index];
@@ -728,9 +728,6 @@ export default class Game {
     }
 
     _refreshCamera(time, camera){
-
-        if (camera.isDisabled)
-            return;
 
         // Clear the camera.
         camera.clear();
@@ -762,12 +759,29 @@ export default class Game {
                 // If the object has the 'avoidChildrenDrawing' flag, then we
                 // should not add the children
                 if (!obj.avoidChildrenDrawing && obj.children) {
+
+                    // Check if children should be sorted first.
+                    let children = obj.children;
+                    if(obj.childrenSort) {
+                        // children is a list of object ids. we need these
+                        // to be the actual objects instead.
+                        let cObjs = obj.children.map((id) => {
+                            return this._gameObjects[id];
+                        });
+                        // Sort them
+                        cObjs = obj.childrenSort(camera, cObjs);
+                        // And back to their Ids.
+                        children = cObjs.map((cObj) => {
+                            return cObj.id;
+                        });
+                    }
+
                     // Otherwise, add it's children in.
                     // Push children into the front so we can continue depth first
-                    for (let i = obj.children.length-1; i >= 0; i--) {
+                    for (let i = children.length-1; i >= 0; i--) {
                         
                         // Push the child.
-                        drawGroup.push({ id: obj.children[i]});
+                        drawGroup.push({ id: children[i]});
                     }
                 }
 

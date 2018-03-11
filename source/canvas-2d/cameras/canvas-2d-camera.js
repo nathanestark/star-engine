@@ -22,16 +22,14 @@ export default class Canvas2DCamera extends Camera {
     }
 
     _fitToContainer() {
-        if (this.canvas.width != this.canvas.offsetWidth
-            || this.canvas.height != this.canvas.offsetHeight) {
-            this.canvas.width = this.canvas.offsetWidth;
-            this.canvas.height = this.canvas.offsetHeight;
+        if(this.canvas.width != this.canvas.offsetWidth) this.canvas.width = this.canvas.offsetWidth;
+        if(this.canvas.height != this.canvas.offsetHeight) this.canvas.height = this.canvas.offsetHeight;
 
-            this.drawCanvas.width = this.canvas.width;
-            this.drawCanvas.height = this.canvas.height;
+        if(this.drawCanvas.width != this.canvas.width) this.drawCanvas.width = this.canvas.width;
+        if(this.drawCanvas.height != this.canvas.height) this.drawCanvas.height = this.canvas.height;
 
-            this.size = { width: this.canvas.width, height: this.canvas.height };
-        }
+        if(this.size.width != this.canvas.width) this.size.width = this.canvas.width;
+        if(this.size.height != this.canvas.height) this.size.height = this.canvas.height;
     }
 
     // Clears the display. First step to draw.

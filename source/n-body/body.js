@@ -62,33 +62,42 @@ export default class Body {
         this.totalForce = vec3.create();
     }
 
+    getPosition(pos, camera){
+        if (camera.view == "x") {
+            return [
+                pos[0] + camera.size.width / 2,
+                pos[1] + camera.size.height / 2
+            ];
+        } else if (camera.view == "y") {
+            return [
+                pos[0] + camera.size.width / 2,
+                pos[2] + camera.size.height / 2
+            ];
+        } else if (camera.view == "z") {
+            return [
+                -pos[1] + camera.size.width / 2,
+                pos[2] + camera.size.height / 2
+            ];
+        }
+        throw new Error("Invalid camera view.");
+    }
+
     draw(time, camera, context){
         context.fillStyle = this.color;
         context.beginPath();
         
-        let p1 = 0;
-        let p2 = 0;
-        if (camera.view == "x") {
-            p1 = this.position[0] + camera.size.width / 2;
-            p2 = this.position[1] + camera.size.height / 2;
-        } else if (camera.view == "y") {
-            p1 = this.position[0] + camera.size.width / 2;
-            p2 = this.position[2] + camera.size.height / 2;
-        } else if (camera.view == "z") {
-            p1 = -this.position[1] + camera.size.width / 2;
-            p2 = this.position[2] + camera.size.height / 2;
-        }
+        const pos = this.getPosition(this.position, camera);
 
         let doDraw = true;
 
         const drawRadius = this.radius * camera.objectScale;
         if (drawRadius * camera.zoom[0] < 0.5) {
             if (this.radius >= camera.minShowRadius || this.selected) {
-                context.arc(p1, p2, 0.5 / camera.zoom[0], 0, this._twoPi);
+                context.arc(pos[0], pos[1], 0.5 / camera.zoom[0], 0, this._twoPi);
             } else
                 doDraw = false;
         } else
-            context.arc(p1, p2, drawRadius, 0, this._twoPi);
+            context.arc(pos[0], pos[1], drawRadius, 0, this._twoPi);
         context.fill();
 
 
@@ -96,8 +105,8 @@ export default class Body {
             context.save();
             context.resetTransform();
 
-            let t1 = p1 * camera.zoom[0] + camera.size.width / 2 - camera.position[0] * camera.zoom[0];
-            let t2 = p2 * camera.zoom[0] + camera.size.height / 2 - camera.position[1] * camera.zoom[0];
+            let t1 = pos[0] * camera.zoom[0] + camera.size.width / 2 - camera.position[0] * camera.zoom[0];
+            let t2 = pos[1] * camera.zoom[0] + camera.size.height / 2 - camera.position[1] * camera.zoom[0];
 
             // Offset it so it isn't right on top of our object.
             const offset = Math.max(1, this.radius * camera.zoom[0] * camera.objectScale);
@@ -115,30 +124,29 @@ export default class Body {
             context.beginPath();
             context.lineWidth = 0.5 / camera.zoom[0];
             context.strokeStyle = "#888";
-            context.rect(p1 - 5 / camera.zoom[0], p2 - 5 / camera.zoom[0], 10 / camera.zoom[0], 10 / camera.zoom[0]);
+            context.rect(pos[0] - 5 / camera.zoom[0], pos[1] - 5 / camera.zoom[0], 10 / camera.zoom[0], 10 / camera.zoom[0]);
             context.stroke();
         }
 
-        if (doDraw) {
+        if (doDraw && this._lastPositions.length > 0) {
             context.beginPath();
             context.strokeStyle = "#333";
             context.lineWidth = 0.5 / camera.zoom[0];
             for (let x = 0; x < this._lastPositions.length; x++) {
-                if (camera.view == "x") {
-                    p1 = this._lastPositions[x][0] + camera.size.width / 2;
-                    p2 = this._lastPositions[x][1] + camera.size.height / 2;
-                } else if (camera.view == "y") {
-                    p1 = this._lastPositions[x][0] + camera.size.width / 2;
-                    p2 = this._lastPositions[x][2] + camera.size.height / 2;
-                } else if (camera.view == "z") {
-                    p1 = -this._lastPositions[x][1] + camera.size.width / 2;
-                    p2 = this._lastPositions[x][2] + camera.size.height / 2;
-                }
+                let point = this._lastPositions[x];
+                if(camera.target)
+                    vec3.sub(point, point, camera.target._lastPositions[x]);
+                if(camera.target != this)
+                    console.log(point);
+                point = this.getPosition(point, camera);
                 if (x == 0)
-                    context.moveTo(p1, p2);
+                    context.moveTo(point[0], point[1]);
                 else
-                    context.lineTo(p1, p2);
+                    context.lineTo(point[0], point[1]);
             }
+            // Draw to object
+            //context.lineTo(pos[0], pos[1]);
+
             context.stroke();
         }
     }
