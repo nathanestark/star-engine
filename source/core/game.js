@@ -361,6 +361,10 @@ export default class Game {
         this._timeScale = tScale;
     }
 
+    getTimeScale() {
+        return this._timeScale;
+    }
+
     onGameObjectAdded(obj) {
 
     }
