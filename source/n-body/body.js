@@ -64,20 +64,12 @@ export default class Body {
 
     getPosition(pos, camera){
         if (camera.view == "x") {
-            return [
-                pos[0] + camera.size.width / 2,
-                pos[1] + camera.size.height / 2
-            ];
+            return [ pos[0], pos[1] ];
         } else if (camera.view == "y") {
-            return [
-                pos[0] + camera.size.width / 2,
-                pos[2] + camera.size.height / 2
+            return [ pos[0], pos[2]
             ];
         } else if (camera.view == "z") {
-            return [
-                -pos[1] + camera.size.width / 2,
-                pos[2] + camera.size.height / 2
-            ];
+            return [ -pos[1], pos[2] ];
         }
         throw new Error("Invalid camera view.");
     }
@@ -129,15 +121,14 @@ export default class Body {
         }
 
         if (doDraw && this._lastPositions.length > 0) {
-            context.beginPath();
             context.strokeStyle = "#333";
             context.lineWidth = 0.5 / camera.zoom[0];
             for (let x = 0; x < this._lastPositions.length; x++) {
-                let point = this._lastPositions[x];
-                if(camera.target)
+                let point = vec3.clone(this._lastPositions[x]);
+                if(camera.target) {
                     vec3.sub(point, point, camera.target._lastPositions[x]);
-                if(camera.target != this)
-                    console.log(point);
+                    vec3.add(point, point, camera.target.position);
+                }
                 point = this.getPosition(point, camera);
                 if (x == 0)
                     context.moveTo(point[0], point[1]);
