@@ -21,6 +21,7 @@ btnPause.addEventListener('click', function (e) {
 });
 
 const tbxTimeScale = document.getElementById('tbxTimeScale');
+tbxTimeScale.value = game.getTimeScale();
 tbxTimeScale.addEventListener('input', function (e) {
     const val = parseInt(tbxTimeScale.value);
     if(!isNaN(val))
