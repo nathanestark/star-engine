@@ -132,10 +132,20 @@ export default class ResonenceWorldObjects {
         }
     }
 
+    getDensity(type) {
+        // Density is based on the type of planet.
+        // For now just return water.
+        return 1;
+    }
+
     generateBody(mass, parent, period) {
 
+        // Get Density
+        const density = this.getDensity();
+
         // Calc Radius
-        let r = Math.pow(mass / (4 * Math.PI / 3), 1 / 3);
+        let radius = Math.pow(0.75 * mass / (density * Math.PI), 1 / 3);
+        //let radius = Math.pow(mass / (4 * Math.PI / 3), 1 / 3);
 
         // Calc position + vel
         let pDist = 0;
@@ -177,7 +187,8 @@ export default class ResonenceWorldObjects {
             position: pos,
             velocity: velocity,
             mass: mass,
-            radius: r,
+            radius: radius,
+            density: density,
             color: "#fff"
         });
 
@@ -192,13 +203,14 @@ export default class ResonenceWorldObjects {
                     : Number.MAX_VALUE; 
 
                 // Calculate resonence
-                const resonence = 1.5 + Math.random() * 1.5; // Sol is 2.
+                const resonence = 1.75 + Math.random() * 2.25; // Sol is 2.
 
                 const maxPeriod = parent 
                     ? Math.sqrt((Math.pow(max,3)*4*Math.PI*Math.PI)/(this.gravity.g*mass))
                     : Number.MAX_VALUE;
 
-                const t0 = Math.random() * Math.min(1E+10, maxPeriod);
+                // Initial period will be determined with the first satellite.
+                let t0 = null;
 
                 // Determine how much total mass the satellites will make up.
                 // Typical mass ratios is 10,000:1. Try to make that our center
@@ -215,18 +227,9 @@ export default class ResonenceWorldObjects {
                 if(!parent)
                     numSats = Math.max(numSats, 1);
                     
+                
                 for (let x = 0; x < numSats && totalMass > 0; x++) {
-                    let cPeriod = t0 * Math.pow(resonence,x)
                     
-                    // Period can't be greater than max.
-                    if(cPeriod > maxPeriod)
-                        break;
-
-                    // Introduce some random variation for flavor (up to 10%)
-                    let deviation = (Math.random() - Math.random()) * ((x+1)*0.02);
-                    cPeriod = cPeriod * (1 + deviation);
-
-
                     // Calculate mass for new body. 
                     let cMass = totalMass
                     if(x < numSats-1) {
@@ -239,14 +242,28 @@ export default class ResonenceWorldObjects {
                         else if (p < 0.90)
                             cMass /= Math.pow(10, (Math.log10(mass)/10));
                     }
+                    
+                    // Get density for new body.
+                    const cDensity = this.getDensity();
+                    // Radius
+                    const cRadius = Math.pow(0.75 * cMass / (cDensity * Math.PI), 1 / 3);
+
 
                     // Calculate Roche limit for our min satellite distance.
-                    const min = 1.26 * r * Math.pow(mass/cMass, 1/3);
+                    const min = 1.26 * cRadius * Math.pow(mass/cMass, 1/3);
                     const minPeriod = Math.sqrt((Math.pow(min,3)*4*Math.PI*Math.PI)/(this.gravity.g*mass));
 
-                    // Did we get too close?
-                    if(minPeriod > cPeriod)
-                        continue; // Then don't use it.
+                    if(t0 == null)
+                        t0 = minPeriod * (Math.random()*10); // Make T0 somewhere between 1 and 10 of the roche limit.
+                    let cPeriod = t0 * Math.pow(resonence,x)
+                    
+                    // Period can't be greater than max.
+                    if(cPeriod > maxPeriod)
+                        break;
+
+                    // Introduce some random variation for flavor (up to 10%)
+                    let deviation = (Math.random() - Math.random()) * ((x+1)*0.02);
+                    cPeriod = cPeriod * (1 + deviation);
 
                     totalMass -= cMass;
 
