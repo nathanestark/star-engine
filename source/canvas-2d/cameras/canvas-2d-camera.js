@@ -11,10 +11,10 @@ export default class Canvas2DCamera extends Camera {
         this.clearColor = "black";
 
         this.canvas = canvas;
-        this.context = this.canvas.getContext("2d");
+        this.context = this.canvas.getContext("bitmaprenderer");
 
-        this.drawCanvas = document.createElement("canvas");
-        this.drawContext = this.canvas.getContext("2d");
+        this.drawCanvas = new OffscreenCanvas(this.size.width, this.size.height);
+        this.drawContext = this.drawCanvas.getContext("2d");
 
         // Set to parent now.
         this._fitToContainer();
@@ -72,6 +72,6 @@ export default class Canvas2DCamera extends Camera {
 
     // Draws anything in the back buffer to the display buffer.
     drawDoubleBuffer() {
-        this.context.drawImage(this.drawCanvas, 0, 0);
+        this.context.transferFromImageBitmap(this.drawCanvas.transferToImageBitmap());
     }
 }
