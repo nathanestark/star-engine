@@ -1,6 +1,6 @@
-import {vec2, vec3, quat} from 'gl-matrix';
+import { vec3, quat } from "gl-matrix";
 
-import Body from './body';
+import Body from "./body";
 
 const G = 0.00000000006674;
 const LY = 9460730472580800;
@@ -9,14 +9,14 @@ const SolM = 1988550000000000000000000000000;
 const SolR = 696342000;
 const TerraM = 5973600000000000000000000;
 const TerraR = 6371000;
-const TerraD = TerraM / (4/3 * Math.PI * Math.pow(TerraR, 3));
+const TerraD = TerraM / ((4 / 3) * Math.PI * Math.pow(TerraR, 3));
 
-const Epoch = Date.UTC(2000,0,1,12,0,0) / 1000; // use J2000, in seconds.
-const DefaultTime = Date.now() / 1000 - Epoch; // In Seconds.
+const Epoch = Date.UTC(2000, 0, 1, 12, 0, 0) / 1000; // use J2000, in seconds.
+// const DefaultTime = Date.now() / 1000 - Epoch; // In Seconds.
 
 const DEFAULTS = {
     // Don't generate objects smaller than this.
-    minGeneratedBodySize: 1E+20,
+    minGeneratedBodySize: 1e20,
     // Types of systems generated with frequency
     systemTypes: [
         {
@@ -114,10 +114,10 @@ const DEFAULTS = {
                 { type: "B", frequency: 1 },
                 { type: "O", frequency: 1 }
             ]
-        },
+        }
     ],
 
-    // Types of binary stars with frequency    
+    // Types of binary stars with frequency
     binarySystemTypes: [
         {
             type: "closeDetached",
@@ -141,52 +141,52 @@ const DEFAULTS = {
     starTypes: [
         {
             type: "M",
-            mass: { min: 0.08*SolM, max: 0.45*SolM },
-            radius: { min:  0.5*SolR, max: 0.7*SolR },
+            mass: { min: 0.08 * SolM, max: 0.45 * SolM },
+            radius: { min: 0.5 * SolR, max: 0.7 * SolR },
 
-            frequency: 0.7645,
+            frequency: 0.7645
         },
         {
             type: "K",
-            mass: {min: 0.45*SolM, max: 0.8*SolM },
-            radius: { min:  0.7*SolR, max: 0.96*SolR },
+            mass: { min: 0.45 * SolM, max: 0.8 * SolM },
+            radius: { min: 0.7 * SolR, max: 0.96 * SolR },
 
-            frequency: 0.121,
+            frequency: 0.121
         },
         {
             type: "G",
-            mass: {min: 0.8*SolM, max: 1.04*SolM },
-            radius: { min:  0.96*SolR, max: 1.15*SolR },
+            mass: { min: 0.8 * SolM, max: 1.04 * SolM },
+            radius: { min: 0.96 * SolR, max: 1.15 * SolR },
 
-            frequency: 0.076,
+            frequency: 0.076
         },
         {
             type: "F",
-            mass: {min: 1.04*SolM, max: 1.4*SolM },
-            radius: { min:  1.15*SolR, max: 1.4*SolR },
+            mass: { min: 1.04 * SolM, max: 1.4 * SolM },
+            radius: { min: 1.15 * SolR, max: 1.4 * SolR },
 
-            frequency: 0.03,
+            frequency: 0.03
         },
         {
             type: "A",
-            mass: {min: 1.4*SolM, max: 2.1*SolM },
-            radius: { min:  1.4*SolR, max: 1.8*SolR },
+            mass: { min: 1.4 * SolM, max: 2.1 * SolM },
+            radius: { min: 1.4 * SolR, max: 1.8 * SolR },
 
-            frequency: 0.006,
+            frequency: 0.006
         },
         {
             type: "B",
-            mass: {min: 2.1*SolM, max: 16*SolM },
-            radius: { min:  1.8*SolR, max: 6.6*SolR },
+            mass: { min: 2.1 * SolM, max: 16 * SolM },
+            radius: { min: 1.8 * SolR, max: 6.6 * SolR },
 
-            frequency: 0.0013,
+            frequency: 0.0013
         },
         {
             type: "O",
-            mass: {min: 16*SolM, max: 150*SolM },
-            radius: { min:  6.6*SolR, max: 20*SolR },
+            mass: { min: 16 * SolM, max: 150 * SolM },
+            radius: { min: 6.6 * SolR, max: 20 * SolR },
 
-            frequency: 0.0000003,
+            frequency: 0.0000003
         }
     ],
     // Type of non-star body generated with frequency.
@@ -195,42 +195,42 @@ const DEFAULTS = {
     planetoidTypes: [
         {
             type: "smallRocky",
-            mass: { min: 1E+20, max: TerraM/10, rng: 'exponential' },
-            density: {min: TerraD*0.9, max: TerraD*1.1 },
+            mass: { min: 1e20, max: TerraM / 10, rng: "exponential" },
+            density: { min: TerraD * 0.9, max: TerraD * 1.1 },
 
             numMoons: { min: 0, max: 5 },
-            avgMoonMassRatio: 0.5, 
-            maxMoonMassRatio: 1, 
+            avgMoonMassRatio: 0.5,
+            maxMoonMassRatio: 1,
 
             chanceOfRings: 0,
-            
-            frequency: .5
+
+            frequency: 0.5
         },
         {
             type: "rocky",
-            mass: { min: TerraM/10, max: TerraM*2, rng: 'exponential' },
-            density: {min: TerraD*0.9, max: TerraD*1.1 },
+            mass: { min: TerraM / 10, max: TerraM * 2, rng: "exponential" },
+            density: { min: TerraD * 0.9, max: TerraD * 1.1 },
 
             numMoons: { min: 0, max: 5 },
-            avgMoonMassRatio: 0.5, 
-            maxMoonMassRatio: 1, 
+            avgMoonMassRatio: 0.5,
+            maxMoonMassRatio: 1,
 
             chanceOfRings: 0.05,
-            ringMassRatio: { min: 0, max: 1E-7, rng: 'exponential' },
+            ringMassRatio: { min: 0, max: 1e-7, rng: "exponential" },
 
-            frequency: .3
+            frequency: 0.3
         },
         {
             type: "superRocky",
-            mass: {min: TerraM*2, max: TerraM*20, rng: 'exponential' },
-            density: {min: TerraD*0.9, max: TerraD*1.1 },
+            mass: { min: TerraM * 2, max: TerraM * 20, rng: "exponential" },
+            density: { min: TerraD * 0.9, max: TerraD * 1.1 },
 
             numMoons: { min: 0, max: 8 },
             avgMoonMassRatio: 0.1,
-            maxMoonMassRatio: 0.25, 
+            maxMoonMassRatio: 0.25,
 
             chanceOfRings: 0.3,
-            ringMassRatio: { min: 0, max: 1E-7, rng: 'exponential' },
+            ringMassRatio: { min: 0, max: 1e-7, rng: "exponential" },
 
             frequency: 0.03
         },
@@ -243,52 +243,52 @@ const DEFAULTS = {
         // },
         {
             type: "gasGiant",
-            mass: {min: TerraM*2, max: TerraM*300, rng: 'exponential' },
-            density: { min: 500,  max: 1500 },
+            mass: { min: TerraM * 2, max: TerraM * 300, rng: "exponential" },
+            density: { min: 500, max: 1500 },
 
             numMoons: { min: 0, max: 10 },
             avgMoonMassRatio: 0.05,
-            maxMoonMassRatio: 0.1, 
+            maxMoonMassRatio: 0.1,
 
             chanceOfRings: 0.6,
-            ringMassRatio: { min: 0, max: 1E-7, rng: 'exponential' },
+            ringMassRatio: { min: 0, max: 1e-7, rng: "exponential" },
 
             frequency: 0.08
         },
         {
             type: "superGasGiant",
-            mass: {min: TerraM*300, max: TerraM*300*80, rng: 'exponential' },
-            density: { min: 1000,  max: 80000 },
+            mass: { min: TerraM * 300, max: TerraM * 300 * 80, rng: "exponential" },
+            density: { min: 1000, max: 80000 },
 
             numMoons: { min: 0, max: 20 },
             avgMoonMassRatio: 0.005,
-            maxMoonMassRatio: 0.01, 
+            maxMoonMassRatio: 0.01,
 
             chanceOfRings: 0.8,
-            ringMassRatio: { min: 0, max: 1E-7, rng: 'exponential' },
+            ringMassRatio: { min: 0, max: 1e-7, rng: "exponential" },
 
             frequency: 0.03
         },
         {
             type: "iceGiant",
-            mass: {min: TerraM*2, max: TerraM*20, rng: 'exponential' },
-            density: { min: 1250,  max: 1750 },
+            mass: { min: TerraM * 2, max: TerraM * 20, rng: "exponential" },
+            density: { min: 1250, max: 1750 },
 
             numMoons: { min: 0, max: 5 },
             avgMoonMassRatio: 0.1,
-            maxMoonMassRatio: 0.25, 
+            maxMoonMassRatio: 0.25,
 
             chanceOfRings: 0.3,
-            ringMassRatio: { min: 0, max: 1E-7, rng: 'exponential' },
+            ringMassRatio: { min: 0, max: 1e-7, rng: "exponential" },
 
             // Should be exclusive to the zone
             // Zone: 1, 2, 3, 4
 
             frequency: 0.06
-        },
+        }
     ],
 
-    // Orbital Eccentricity 
+    // Orbital Eccentricity
     eccentricityTypes: [
         {
             eccentricity: { min: 0, max: 0.01 },
@@ -311,7 +311,7 @@ const DEFAULTS = {
             frequency: 0.001
         }
     ],
-    // Orbital inclination 
+    // Orbital inclination
     inclinationTypes: [
         {
             inclination: { min: -1, max: 1 },
@@ -330,7 +330,7 @@ const DEFAULTS = {
             frequency: 0.01
         },
         {
-            inclination: { min: -90, max: 90  },
+            inclination: { min: -90, max: 90 },
             frequency: 0.001
         }
     ]
@@ -339,7 +339,6 @@ const DEFAULTS = {
 // Improve this class for the future.
 class RNG {
     constructor(seed) {
-        
         this.seed = this.computeRNGSeed(seed);
 
         this.m_w = this.seed;
@@ -347,13 +346,13 @@ class RNG {
         this.mask = 0xffffffff;
     }
     computeRNGSeed(sSeed) {
-        if(typeof sSeed === 'number') return Math.floor(sSeed);
-        else if(!sSeed) return Math.random() * 1e17;
+        if (typeof sSeed === "number") return Math.floor(sSeed);
+        else if (!sSeed) return Math.random() * 1e17;
         const aSeed = Uint32Array.from(sSeed, (c) => c.codePointAt(0));
 
         let seed = 0;
-        for(let x = 0; x < aSeed.length; x++) {
-            seed = ((seed << 5) - seed) + aSeed[x];
+        for (let x = 0; x < aSeed.length; x++) {
+            seed = (seed << 5) - seed + aSeed[x];
             seed |= 0;
         }
         return seed;
@@ -370,8 +369,7 @@ class RNG {
 
 export default class SystemGenerator {
     constructor() {
-
-/*        let children = [];
+        /*        let children = [];
         const walk = (parent) => {
             children.push(parent);
             if(parent.satellites)
@@ -386,7 +384,7 @@ export default class SystemGenerator {
         this.objects = { 
             children: children
         };
-*/        
+*/
         const rng = new RNG(21);
         this.seed = rng.seed;
 
@@ -395,90 +393,87 @@ export default class SystemGenerator {
         this.time = Epoch + 1000000000000;
     }
 
-    curveRandom(bias=0.5, precision=10) {
+    curveRandom(bias = 0.5, precision = 10) {
         let r = 0;
-        for(let x=0;x<precision;x++) r += Math.pow(this.random(), 0.5/bias);
-        return r/precision;
+        for (let x = 0; x < precision; x++) r += Math.pow(this.random(), 0.5 / bias);
+        return r / precision;
     }
 
     between(min, max, algorithm = this.random) {
-        if(min == max) return min;
-        if(min > max) {
+        if (min == max) return min;
+        if (min > max) {
             const temp = min;
             min = max;
             max = temp;
         }
-        if(min == 0) return algorithm() * max;
+        if (min == 0) return algorithm() * max;
 
         return min + algorithm() * (max - min);
     }
     betweenExp(min, max, algorithm = this.random) {
-        if(min == max) return min;
-        if(min > max) {
+        if (min == max) return min;
+        if (min > max) {
             const temp = min;
             min = max;
             max = temp;
         }
 
         let shift = 0;
-        if(min < 0) {
+        if (min < 0) {
             shift = min;
             max -= shift;
             min = 0;
         }
 
-        if(min == 0) return Math.pow(10, algorithm() * Math.log10(max+1)) - 1 + shift;
+        if (min == 0) return Math.pow(10, algorithm() * Math.log10(max + 1)) - 1 + shift;
 
-        if(max < 1) {
-
-            return 1/Math.pow(10, 
-                Math.log10(1/min) 
-                + algorithm() 
-                * (Math.log10(1/max) - Math.log10(1/min))
+        if (max < 1) {
+            return (
+                1 /
+                Math.pow(
+                    10,
+                    Math.log10(1 / min) + algorithm() * (Math.log10(1 / max) - Math.log10(1 / min))
+                )
             );
         }
 
-        return Math.pow(10, 
-            Math.log10(min) 
-            + algorithm() 
-            * (Math.log10(max) - Math.log10(min))
-        );
+        return Math.pow(10, Math.log10(min) + algorithm() * (Math.log10(max) - Math.log10(min)));
     }
 
     getValue(val) {
-        if(typeof val === 'object') {
+        if (typeof val === "object") {
             let between = null;
             let algorithm = null;
             let rng = [];
-            if(typeof val.rng !== 'undefined') {
-                if(val.rng instanceof Array) rng = val.rng.slice();
+            if (typeof val.rng !== "undefined") {
+                if (val.rng instanceof Array) rng = val.rng.slice();
                 else rng = [val.rng];
             }
-            rng.forEach(r => {
-                if(typeof r !== 'object') r = { type: r };
-                switch(r.type) { 
-                    case 'exponential': {
-                        if(!between) between = this.betweenExp;
+            rng.forEach((r) => {
+                if (typeof r !== "object") r = { type: r };
+                switch (r.type) {
+                    case "exponential": {
+                        if (!between) between = this.betweenExp;
                         break;
                     }
-                    case 'linear': {
-                        if(!between) between = this.between;
+                    case "linear": {
+                        if (!between) between = this.between;
                         break;
                     }
-                    case 'normal': {
-                        const bias = typeof r.bias === 'number' ? r.bias : 0.5; 
-                        if(!algorithm) algorithm = this.curveRandom.bind(bias);
+                    case "normal": {
+                        const bias = typeof r.bias === "number" ? r.bias : 0.5;
+                        if (!algorithm) algorithm = this.curveRandom.bind(bias);
                         break;
                     }
-                    case 'uniform': {
-                        if(!algorithm) algorithm = this.random;
+                    case "uniform": {
+                        if (!algorithm) algorithm = this.random;
                         break;
                     }
                 }
             });
             // Defaults
-            if(!between) between = this.between;
-            if(!algorithm) algorithm = this.random;
+            if (!between) between = this.between;
+            if (!algorithm) algorithm = this.random;
 
             return between(val.min, val.max, algorithm);
         }
@@ -488,31 +483,29 @@ export default class SystemGenerator {
     choose(opts) {
         // First add all frequencies.
         let totalF = 0;
-        for(let key in Object.keys(opts)) {
+        for (let key in Object.keys(opts)) {
             totalF += opts[key].frequency;
         }
-        
+
         // Roll
         const r = this.random() * totalF;
         let cur = 0;
-        for(let key in Object.keys(opts)) {
+        for (let key in Object.keys(opts)) {
             const f = opts[key].frequency;
             cur += f;
 
-            if(r <= cur) return opts[key]; 
+            if (r <= cur) return opts[key];
         }
     }
 
     generateId() {
-        if(!this.__id)
-            this.__id = 1;
-        
+        if (!this.__id) this.__id = 1;
+
         return this.__id++;
     }
 
-
     generateSystem(props) {
-        if(!props) props = DEFAULTS
+        if (!props) props = DEFAULTS;
         else props = Object.assign({}, DEFAULTS, props);
 
         const createSystem = (numStars) => {
@@ -522,81 +515,85 @@ export default class SystemGenerator {
                 type: "subsystem",
                 numStars: numStars,
                 children: [],
-                get mass() { return this.children.reduce((p,c) => p + c.mass, 0); },
+                get mass() {
+                    return this.children.reduce((p, c) => p + c.mass, 0);
+                },
                 get radius() {
                     let maxRadius = 0;
-                    for(let x=0;x<this.children.length;x++) {
+                    for (let x = 0; x < this.children.length; x++) {
                         // Distance from parent + radius
                         const pos = vec3.create();
                         vec3.sub(pos, this.position, this.children[x].position);
-                        let r = vec3.len(pos) + this.children[x].radius; 
-                        if(r > maxRadius)
-                        maxRadius = r;
+                        let r = vec3.len(pos) + this.children[x].radius;
+                        if (r > maxRadius) maxRadius = r;
                     }
                     return maxRadius;
                 },
-                get velocity() { return velocity; },
+                get velocity() {
+                    return velocity;
+                },
                 set velocity(val) {
-                    if(!vec3.exactEquals(velocity, val)) {
+                    if (!vec3.exactEquals(velocity, val)) {
                         // Grab difference
                         const diff = vec3.create();
                         vec3.subtract(diff, val, velocity);
                         // Update this system
                         velocity = val;
                         // Then all children
-                        this.children.forEach(c => {
+                        this.children.forEach((c) => {
                             const vel = vec3.create();
                             vec3.add(vel, c.velocity, diff);
                             c.velocity = vel;
                         });
                     }
                 },
-                get position() { return position; },
+                get position() {
+                    return position;
+                },
                 set position(val) {
-                    if(!vec3.exactEquals(position, val)) {
+                    if (!vec3.exactEquals(position, val)) {
                         // Grab difference
                         const diff = vec3.create();
                         vec3.subtract(diff, val, position);
                         // Update this system
                         position = val;
                         // Then all children
-                        this.children.forEach(c => {
+                        this.children.forEach((c) => {
                             const pos = vec3.create();
                             vec3.add(pos, c.position, diff);
                             c.position = pos;
                         });
                     }
                 }
-            }; 
+            };
         };
 
         // Determine number of stars
         const sysType = this.choose(props.systemTypes);
 
         const system = createSystem(sysType.numStars);
-        
+
         // Generate subsystems.
         const planetarySystems = [];
         {
             const pSysList = [system];
 
-            while(pSysList.length > 0) {
+            while (pSysList.length > 0) {
                 const sys = pSysList.shift();
-                
-                if(sys.numStars == 1) {
-                    sys.subType = 'star';
+
+                if (sys.numStars == 1) {
+                    sys.subType = "star";
                     planetarySystems.push(sys);
-                }
-                else if(sys.numStars == 2) {
+                } else if (sys.numStars == 2) {
                     const binaryType = this.choose(props.binarySystemTypes);
 
                     const newSys1 = createSystem(1);
-                    newSys1.subType = 'star';
-                    
-                    const newSys2 = createSystem(1);
-                    newSys2.subType = 'star';
+                    newSys1.subType = "star";
 
-                    if(binaryType.type == 'wide') {
+                    const newSys2 = createSystem(1);
+                    newSys2.subType = "star";
+
+                    if (binaryType.type == "wide") {
                         sys.subType = binaryType.type;
 
                         planetarySystems.push(newSys1);
@@ -613,18 +610,18 @@ export default class SystemGenerator {
 
                         sys.children.push(pairSys);
                     }
-                }
-                else if(sys.numStars > 2) {
+                } else if (sys.numStars > 2) {
                     // At least one star gets put into each subsystem.
                     const remainingStars = sys.numStars - 2;
-                    const starDist = new Array(2); 
-                    for(let x=0;x<starDist.length;x++) starDist[x] = 1;
-                    for(let x=0;x< remainingStars; x++) starDist[Math.floor(this.between(0, starDist.length))]++;
+                    const starDist = new Array(2);
+                    for (let x = 0; x < starDist.length; x++) starDist[x] = 1;
+                    for (let x = 0; x < remainingStars; x++)
+                        starDist[Math.floor(this.between(0, starDist.length))]++;
 
-                    starDist.forEach(s => {
+                    starDist.forEach((s) => {
                         const newSys = createSystem(s);
-                        if(s == 1) { 
-                            newSys.subType = 'star';
+                        if (s == 1) {
+                            newSys.subType = "star";
                             planetarySystems.push(newSys);
                         } else {
                             pSysList.push(newSys);
@@ -640,38 +637,38 @@ export default class SystemGenerator {
         // the stars
         const starList = [];
         {
-            const starTypes = props.starTypes.map(t => {
+            const starTypes = props.starTypes.map((t) => {
                 const st = Object.assign({}, t);
-                if(sysType.starTypeFrequency) {
-                    const sst = sysType.starTypeFrequency.find(f => f.type == st.type);
-                    if(sst) st.frequency = sst.frequency;
+                if (sysType.starTypeFrequency) {
+                    const sst = sysType.starTypeFrequency.find((f) => f.type == st.type);
+                    if (sst) st.frequency = sst.frequency;
                 }
                 return st;
             });
 
-            for(let x=0;x<system.numStars;x++) {
+            for (let x = 0; x < system.numStars; x++) {
                 const starType = this.choose(starTypes);
                 const star = {
-                    type: 'star',
+                    type: "star",
                     id: this.generateId(),
                     subType: starType.type,
                     mass: this.getValue(starType.mass),
-                    radius: this.getValue(starType.radius),
+                    radius: this.getValue(starType.radius)
                 };
-                star.density = star.mass / ((4/3) * Math.PI * Math.pow(star.radius, 3));
+                star.density = star.mass / ((4 / 3) * Math.PI * Math.pow(star.radius, 3));
 
                 starList.push(star);
             }
-            
-            // Assign 
+
+            // Assign
             let sX = 0;
-            
+
             const assignStars = (sys) => {
-                if(sys.numStars == 1) {
+                if (sys.numStars == 1) {
                     const star = starList[sX++];
                     sys.children.push(star);
                 } else {
-                    sys.children.forEach(s => assignStars(s));
+                    sys.children.forEach((s) => assignStars(s));
                 }
             };
             assignStars(system);
@@ -679,24 +676,23 @@ export default class SystemGenerator {
             // Rebalance the system, by making sure the branch with the most mass
             // before any others. All others can maintain order
             const balanceSystems = (sys) => {
-                if(sys.children.length >= 2) {
+                if (sys.children.length >= 2) {
                     let max = 0;
                     let maxIndex = null;
-                    sys.children.forEach((c,i) => {
-                        if(maxIndex == null || max < c.mass) {
+                    sys.children.forEach((c, i) => {
+                        if (maxIndex == null || max < c.mass) {
                             max = c.mass;
                             maxIndex = i;
                         }
                     });
                     const maxSys = sys.children[maxIndex];
-                    sys.children.splice(maxIndex,1);
+                    sys.children.splice(maxIndex, 1);
                     sys.children.unshift(maxSys);
 
-                    sys.children.forEach(s => balanceSystems(s));
+                    sys.children.forEach((s) => balanceSystems(s));
                 }
             };
             balanceSystems(system);
-
         }
 
         // Determine total possible mass of planets
@@ -705,7 +701,7 @@ export default class SystemGenerator {
         // Once we have the stars, determine the planetoids.
         const planetoidList = [];
         {
-            const planetoidTypes = props.planetoidTypes.map(t => {
+            const planetoidTypes = props.planetoidTypes.map((t) => {
                 const st = Object.assign({}, t);
                 // Future pruning based on rules in system or sun?
                 return st;
@@ -713,43 +709,44 @@ export default class SystemGenerator {
 
             const numPlanetoids = Math.floor(this.getValue(sysType.numPlanetoids));
             let totalMass = 0;
-            
 
-            for(let x=0;x<numPlanetoids;x++) {
+            for (let x = 0; x < numPlanetoids; x++) {
                 const bodyType = this.choose(planetoidTypes);
                 const mass = this.getValue(bodyType.mass);
                 const density = this.getValue(bodyType.density);
-                const radius = Math.pow(mass / (4/3 * Math.PI * density), 1/3);
-                let maxMoonMass = this.between(0, 
-                    bodyType.maxMoonMassRatio * mass, 
-                    this.curveRandom.bind(this, 
+                const radius = Math.pow(mass / ((4 / 3) * Math.PI * density), 1 / 3);
+                let maxMoonMass = this.between(
+                    0,
+                    bodyType.maxMoonMassRatio * mass,
+                    this.curveRandom.bind(
+                        this,
                         bodyType.avgMoonMassRatio / bodyType.maxMoonMassRatio
                     )
                 );
 
-                if(maxMoonMass < props.minGeneratedBodySize) maxMoonMass = 0;
+                if (maxMoonMass < props.minGeneratedBodySize) maxMoonMass = 0;
 
                 const numMoons = Math.min(
-                    Math.floor(maxMoonMass / props.minGeneratedBodySize), 
+                    Math.floor(maxMoonMass / props.minGeneratedBodySize),
                     Math.floor(this.getValue(bodyType.numMoons))
                 );
-                if(numMoons == 0) maxMoonMass = 0;
+                if (numMoons == 0) maxMoonMass = 0;
 
+                let ringMass =
+                    bodyType.ringMassRatio &&
+                    bodyType.chanceOfRings &&
+                    this.random() <= bodyType.chanceOfRings
+                        ? this.getValue(bodyType.ringMassRatio)
+                        : 0;
 
-                let ringMass = bodyType.ringMassRatio 
-                    && bodyType.chanceOfRings && this.random() <= bodyType.chanceOfRings 
-                    ? this.getValue(bodyType.ringMassRatio)
-                    : 0;
-
-                if(ringMass < 0) {
+                if (ringMass < 0) {
                     throw new Error("Ring mass is " + ringMass);
-                    
                 }
 
                 ringMass = ringMass * mass;
-                
+
                 const planetoid = {
-                    type: 'planet',
+                    type: "planet",
                     id: this.generateId(),
                     subType: bodyType.type,
                     numMoons: numMoons,
@@ -763,11 +760,11 @@ export default class SystemGenerator {
                 totalMass += planetoid.mass;
 
                 // If our total mass exceeds our max, drop the largest planet.
-                if(totalMass > maxPlanetoidMass) { 
+                if (totalMass > maxPlanetoidMass) {
                     let max = 0;
                     let index = null;
-                    for(let p=0; p < planetoidList.length;p++) {
-                        if(index == null || max < planetoidList[p].mass) {
+                    for (let p = 0; p < planetoidList.length; p++) {
+                        if (index == null || max < planetoidList[p].mass) {
                             max = planetoidList[p].mass;
                             index = x;
                         }
@@ -775,48 +772,49 @@ export default class SystemGenerator {
                     planetoidList.splice(index, 1);
                 }
             }
-            
 
             // Sort them into planetary systems.
             const unusedBodies = planetoidList.slice();
-            unusedBodies.sort((b1,b2) => b2.mass - b1.mass);
+            unusedBodies.sort((b1, b2) => b2.mass - b1.mass);
             const planetMoonSystems = [];
 
-            while(unusedBodies.length > 0) {
+            while (unusedBodies.length > 0) {
                 // Give the biggest planets a chance at moons.
                 const body = unusedBodies.splice(0, 1)[0];
 
-                while(body.numMoons > 0 && unusedBodies.length > 0) {
-                    const candidates = unusedBodies.filter(p => p.mass <= body.maxMoonMass);
-                    if(candidates.length > 0) {
+                while (body.numMoons > 0 && unusedBodies.length > 0) {
+                    const candidates = unusedBodies.filter((p) => p.mass <= body.maxMoonMass);
+                    if (candidates.length > 0) {
                         const moon = candidates[Math.floor(this.random() * candidates.length)];
-                        unusedBodies.splice(unusedBodies.findIndex(b => b == moon), 1);
+                        unusedBodies.splice(
+                            unusedBodies.findIndex((b) => b == moon),
+                            1
+                        );
                         moon.numMoons = moon.maxMoonMass = 0;
-                        moon.type = 'moon';
+                        moon.type = "moon";
 
-                        if(!body.moons) body.moons = [];
+                        if (!body.moons) body.moons = [];
                         body.moons.push(moon);
                         body.numMoons--;
                         body.maxMoonMass -= moon.mass;
-                    }
-                    else break;
+                    } else break;
                 }
                 body.numMoons = body.moons && body.moons.length > 0 ? body.moons.length : 0;
                 planetMoonSystems.push(body);
-            }            
+            }
 
             // Now assign each planet/moon system to a star
-            for(let x=0;x<planetMoonSystems.length;x++) { 
+            for (let x = 0; x < planetMoonSystems.length; x++) {
                 const index = Math.floor(this.between(0, planetarySystems.length));
                 const planet = planetMoonSystems[x];
-                if(planet.numMoons == 0) planetarySystems[index].children.push(planet);
-                else  {
+                if (planet.numMoons == 0) planetarySystems[index].children.push(planet);
+                else {
                     const pSys = createSystem(0);
                     pSys.subType = "planet";
                     pSys.children.push(planet);
 
-                    if(planet.moons) {
-                        planet.moons.forEach(m => pSys.children.push(m));
+                    if (planet.moons) {
+                        planet.moons.forEach((m) => pSys.children.push(m));
                         delete planet.moons;
                     }
                     delete planet.maxMoonMass;
@@ -824,27 +822,25 @@ export default class SystemGenerator {
                     planetarySystems[index].children.push(pSys);
                 }
             }
-
         }
 
         // Determine position of each body from center of system
         let finalSystem = null;
         {
-            const isBinary = (sys) => {
-                return sys.children.length == 2 
-                    && (sys.subType == 'wide' 
-                        || sys.subType == 'closeDetached'
-                        || sys.subType == 'closeSemidetached'
-                        || sys.subType == 'closeContact');
-                };
+            // const isBinary = (sys) => {
+            //     return sys.children.length == 2
+            //         && (sys.subType == 'wide'
+            //             || sys.subType == 'closeDetached'
+            //             || sys.subType == 'closeSemidetached'
+            //             || sys.subType == 'closeContact');
+            //     };
 
             const calculateSystems = (sys, parent) => {
-
                 // Go bottom up.
-                if(sys.children) sys.children.forEach(c => calculateSystems(c, sys));
-                
+                if (sys.children) sys.children.forEach((c) => calculateSystems(c, sys));
+
                 // If this is a leaf
-                if(!sys.children) {
+                if (!sys.children) {
                     // Then relative to itself, it has 0 position and velocity.
                     sys.position = vec3.create();
                     sys.velocity = vec3.create();
@@ -859,9 +855,9 @@ export default class SystemGenerator {
                     sys.meanAnomaly = 0;
                 }
                 // If it is just one...
-                else if(sys.children.length == 1) {
+                else if (sys.children.length == 1) {
                     // Then the system doesn't need to exist.
-                    if(parent) {
+                    if (parent) {
                         const index = parent.children.indexOf(sys);
                         parent.children.splice(index, 1, sys.children[0]);
                     } else {
@@ -869,12 +865,13 @@ export default class SystemGenerator {
                     }
                 }
                 // If it is some kind of binary...
-                else if(sys.children.length == 2 
-                    && (sys.subType == 'contact' 
-                        || sys.subType == 'closeDetached' 
-                        || sys.subType == 'closeSemidetached' 
-                        || sys.subType == 'wide')) {
-
+                else if (
+                    sys.children.length == 2 &&
+                    (sys.subType == "contact" ||
+                        sys.subType == "closeDetached" ||
+                        sys.subType == "closeSemidetached" ||
+                        sys.subType == "wide")
+                ) {
                     const body1 = sys.children[0];
                     const body2 = sys.children[1];
 
@@ -886,45 +883,51 @@ export default class SystemGenerator {
 
                     // For now just do 'wide', 'detatched', 'contact'
                     let dist = 0;
-                    if(sys.subType == 'contact') {
+                    if (sys.subType == "contact") {
                         const r1 = body1.radius;
                         const r2 = body2.radius;
                         dist = this.between(Math.max(r1, r2), r1 + r2);
-                    }
-                    else if(sys.subType == 'closeDetached' || sys.subType == 'closeSemidetached') {
+                    } else if (
+                        sys.subType == "closeDetached" ||
+                        sys.subType == "closeSemidetached"
+                    ) {
                         const r1 = body1.radius;
                         const r2 = body2.radius;
                         dist = this.between(r1 + r2, 50 * (r1 + r2));
-                    }
-                    else {
+                    } else {
                         const r1 = body1.radius;
                         const r2 = body2.radius;
                         // TODO
                         // Binary distance appears to be a log normal distribution.
                         // Most have a period under 100 years. Max 1 LY.
-                        dist = this.between(50 * (r1 + r2), LY, this.curveRandom.bind(this, 100*AU / LY));
+                        dist = this.between(
+                            50 * (r1 + r2),
+                            LY,
+                            this.curveRandom.bind(this, (100 * AU) / LY)
+                        );
                     }
 
                     const m1 = body1.mass;
                     const m2 = body2.mass;
 
                     // Barycenters
-                    const b1 = dist / (1 + (m1/m2));
-                    const b2 = dist / (1 + (m2/m1));
+                    const b1 = dist / (1 + m1 / m2);
+                    const b2 = dist / (1 + m2 / m1);
 
-                    if(typeof b1 === 'undefined'
-                        || typeof b2 === 'undefined') throw "BAD BARYCENTER";
+                    if (typeof b1 === "undefined" || typeof b2 === "undefined")
+                        throw "BAD BARYCENTER";
 
-
-                    const eccentricity = this.getValue(this.choose(props.eccentricityTypes).eccentricity);
-                    const inclination = this.getValue(this.choose(props.inclinationTypes).inclination);
+                    const eccentricity = this.getValue(
+                        this.choose(props.eccentricityTypes).eccentricity
+                    );
+                    const inclination = this.getValue(
+                        this.choose(props.inclinationTypes).inclination
+                    );
                     const longitudeOfAscendingNode = this.between(0, 360); // Need to calculate this to determine the 'rotation' (z axis?) of the orbital plane if it is inclined. If not, use 0.
                     const argumentOfPeriapsis = this.between(0, 360); // Angle from reference plane to the periapsis.
                     const meanAnomalyAtEpoch = this.between(0, 360); // Position in orbit at the start of the epoch.
 
-
-                    const period = 2 * Math.PI * Math.sqrt(Math.pow((b1 + b2),3) / (G * (m1 + m2)));
-
+                    const period = 2 * Math.PI * Math.sqrt(Math.pow(b1 + b2, 3) / (G * (m1 + m2)));
 
                     body1.period = period;
                     body1.eccentricity = eccentricity;
@@ -934,8 +937,8 @@ export default class SystemGenerator {
                     body1.longitudeOfAscendingNode = longitudeOfAscendingNode;
                     body1.argumentOfPeriapsis = argumentOfPeriapsis;
                     body1.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
-                    body1.meanAnomaly = body1.meanAnomalyAtEpoch + (360 * (this.time - Epoch) / period); // Current position (in degrees) of body in it's orbit.
-
+                    body1.meanAnomaly =
+                        body1.meanAnomalyAtEpoch + (360 * (this.time - Epoch)) / period; // Current position (in degrees) of body in it's orbit.
 
                     body2.period = period;
                     body2.eccentricity = eccentricity;
@@ -945,38 +948,44 @@ export default class SystemGenerator {
                     body2.longitudeOfAscendingNode = longitudeOfAscendingNode;
                     body2.argumentOfPeriapsis = argumentOfPeriapsis + 180;
                     body2.meanAnomalyAtEpoch = meanAnomalyAtEpoch;
-                    body2.meanAnomaly = body2.meanAnomalyAtEpoch + (360 * (this.time - Epoch) / period); // Current position (in degrees) of body in it's orbit.
+                    body2.meanAnomaly =
+                        body2.meanAnomalyAtEpoch + (360 * (this.time - Epoch)) / period; // Current position (in degrees) of body in it's orbit.
 
                     this._calculateEularValues(body1, body2.mass);
                     this._calculateEularValues(body2, body1.mass);
-                } 
-                // Any other system type requires us to generate a resonence 
+                }
+                // Any other system type requires us to generate a resonence
                 // structure
                 else {
-                    const sysMass = sys.mass;
+                    // const sysMass = sys.mass;
 
                     // First body is the 'anchor' or parent body.
                     const anchor = sys.children[0];
-                    anchor.e
+                    anchor.e;
                     // Rest are the satalites
                     const satallites = sys.children.slice(1);
 
                     // Calculate Roche limit for our min satellite distance,
                     // using our first satallite.
                     let min = 0;
-                    for(let x=0;x<satallites.length;x++) {
-                        min = Math.max(min, 1.26 * satallites[x].radius * Math.pow(anchor.mass/satallites[x].mass, 1/3));
+                    for (let x = 0; x < satallites.length; x++) {
+                        min = Math.max(
+                            min,
+                            1.26 *
+                                satallites[x].radius *
+                                Math.pow(anchor.mass / satallites[x].mass, 1 / 3)
+                        );
                     }
-                    
+
                     // If this is a binary system that's being orbited, then the
                     // min needs to be large enough not to be disturbed by
                     // the orbiting stars.
-                    const sysMin = anchor.radius*(anchor.type == "subsystem" ? 3 : 1);
+                    const sysMin = anchor.radius * (anchor.type == "subsystem" ? 3 : 1);
                     min = Math.max(sysMin, min);
-                    // min (or first orbit) should be between absolute min 
+                    // min (or first orbit) should be between absolute min
                     // and 160x min (Mercury is ~80x min from sun).
-                    min = this.between(min, min*160, this.curveRandom.bind(this)); 
-                    
+                    min = this.between(min, min * 160, this.curveRandom.bind(this));
+
                     // Calculate resonence
                     const resonence = this.between(1.75, 2.25); // Sol is 2.
 
@@ -997,53 +1006,63 @@ export default class SystemGenerator {
                         meanAnomaly: 0
                     };
 
-
-                    let t0 = 2 * Math.PI * Math.sqrt(Math.pow(min,3)/(G*anchor.mass));
+                    let t0 = 2 * Math.PI * Math.sqrt(Math.pow(min, 3) / (G * anchor.mass));
                     let r = 0;
-                    for(let x = 0; x < satallites.length; x++) {
+                    for (let x = 0; x < satallites.length; x++) {
                         const satallite = satallites[x];
 
                         let period = 0;
                         let pDist = 0;
                         let hillDist = Math.MAX_VALUE;
-                        const eccentricity = this.getValue(this.choose(props.eccentricityTypes).eccentricity);
+                        const eccentricity = this.getValue(
+                            this.choose(props.eccentricityTypes).eccentricity
+                        );
                         let apoapsis = null;
                         let periapsis = null;
-                        do 
-                        {
+                        do {
                             // Keep cycling the period until we find one that the hill sphere
                             // fits into.
-                            period = t0 * Math.pow(resonence,r)
+                            period = t0 * Math.pow(resonence, r);
 
                             // Introduce some random variation for flavor (up to 10%)
-                            let deviation = (this.random() - this.random()) * ((r+1)*0.02);
+                            let deviation = (this.random() - this.random()) * ((r + 1) * 0.02);
                             period = period * (1 + deviation);
 
                             // Calculate Position
-                            pDist = Math.pow(((G * (tempAnchor.mass + satallite.mass) * period*period) / (4 * Math.PI * Math.PI)), 1/3);
+                            pDist = Math.pow(
+                                (G * (tempAnchor.mass + satallite.mass) * period * period) /
+                                    (4 * Math.PI * Math.PI),
+                                1 / 3
+                            );
 
                             apoapsis = pDist * (1 + eccentricity);
                             periapsis = pDist * (1 - eccentricity);
-    
-                            // If satallite is a sys, use reverse Hill sphere to 
+
+                            // If satallite is a sys, use reverse Hill sphere to
                             // determine min distance between our satallite sys and
                             // the 'anchor'.
-                            if(typeof satallite.children != 'undefined' && satallite.children.length > 0) {
-                                const maxSatDist = vec3.len(satallite.children[satallite.children.length-1].position);
-                                hillDist = pDist * Math.pow(satallite.mass/(3*anchor.mass), 1/3);
+                            if (
+                                typeof satallite.children != "undefined" &&
+                                satallite.children.length > 0
+                            ) {
+                                hillDist =
+                                    pDist * Math.pow(satallite.mass / (3 * anchor.mass), 1 / 3);
                             }
                             r++;
-                        } while(periapsis < hillDist || periapsis < min);
+                        } while (periapsis < hillDist || periapsis < min);
 
                         satallite.period = period;
                         satallite.apoapsis = apoapsis;
                         satallite.periapsis = periapsis;
                         satallite.eccentricity = eccentricity;
-                        satallite.inclination = this.getValue(this.choose(props.inclinationTypes).inclination);
+                        satallite.inclination = this.getValue(
+                            this.choose(props.inclinationTypes).inclination
+                        );
                         satallite.longitudeOfAscendingNode = this.between(0, 360); // Need to calculate this to determine the 'rotation' (z axis?) of the orbital plane if it is inclined. If not, use 0.
                         satallite.argumentOfPeriapsis = this.between(0, 360); // Angle from reference plane to the periapsis.
                         satallite.meanAnomalyAtEpoch = this.between(0, 360); // Position in orbit at the start of the epoch.
-                        satallite.meanAnomaly = satallite.meanAnomalyAtEpoch + (360 * (this.time - Epoch) / period); // Current position (in degrees) of body in it's orbit.
+                        satallite.meanAnomaly =
+                            satallite.meanAnomalyAtEpoch + (360 * (this.time - Epoch)) / period; // Current position (in degrees) of body in it's orbit.
 
                         this._calculateEularValues(satallite, tempAnchor.mass);
                     }
@@ -1059,28 +1078,28 @@ export default class SystemGenerator {
                 return sys;
             };
 
-            finalSystem = calculateSystems(system); 
+            finalSystem = calculateSystems(system);
         }
-        
-//        console.log(starList);
+
+        //        console.log(starList);
         console.log(finalSystem);
 
-            // Need, for each subsystem/star/planetoid:
-            //  mass
-            //  volume
-            //  density
-            //  radius
-            // 
-            //  position
-            //  velocity
-            //  rotation
-            //
-            //  apoapsis
-            //  periapsis
-            //  eccentricity
-            //  orbital period
-            //  mean anomaly
-            //  inclination
+        // Need, for each subsystem/star/planetoid:
+        //  mass
+        //  volume
+        //  density
+        //  radius
+        //
+        //  position
+        //  velocity
+        //  rotation
+        //
+        //  apoapsis
+        //  periapsis
+        //  eccentricity
+        //  orbital period
+        //  mean anomaly
+        //  inclination
 
         const responseBody = {
             seed: this.seed,
@@ -1089,12 +1108,16 @@ export default class SystemGenerator {
             time: this.time
         };
         {
-            const getVector = (vec) => { return { x: vec[0], y: vec[1], z: vec[2] }; };
+            const getVector = (vec) => {
+                return { x: vec[0], y: vec[1], z: vec[2] };
+            };
             const numConSet = (parent, target) => {
-                return (prop) => { if(parent[prop]) target[prop] = parent[prop]; };
-            }
+                return (prop) => {
+                    if (parent[prop]) target[prop] = parent[prop];
+                };
+            };
 
-            const rStars = starList.map(b => {
+            const rStars = starList.map((b) => {
                 return {
                     id: b.id,
                     type: b.type,
@@ -1105,63 +1128,63 @@ export default class SystemGenerator {
                     density: b.density
                 };
             });
-            const rPlanetoids = planetoidList.map(b => {
-                const body = { 
+            const rPlanetoids = planetoidList.map((b) => {
+                const body = {
                     id: b.id,
                     type: b.type,
                     subType: b.subType,
 
                     mass: b.mass,
                     radius: b.radius,
-                    density: b.density,
+                    density: b.density
                 };
-                if(b.ringMass) body.ringMass = b.ringMass;
+                if (b.ringMass) body.ringMass = b.ringMass;
 
                 return body;
             });
             responseBody.bodies = rStars.concat(rPlanetoids);
-            if(responseBody.bodies.length == 0) delete responseBody.bodies;
+            if (responseBody.bodies.length == 0) delete responseBody.bodies;
 
-            responseBody.stars = rStars.map(b => b.id);
-            if(responseBody.stars.length == 0) delete responseBody.stars;
+            responseBody.stars = rStars.map((b) => b.id);
+            if (responseBody.stars.length == 0) delete responseBody.stars;
 
-            responseBody.planets = rPlanetoids.filter(b => b.type == 'planet').map(b => b.id);
-            if(responseBody.planets.length == 0) delete responseBody.planets;
+            responseBody.planets = rPlanetoids.filter((b) => b.type == "planet").map((b) => b.id);
+            if (responseBody.planets.length == 0) delete responseBody.planets;
 
-            responseBody.moons = rPlanetoids.filter(b => b.type != 'planet').map(b => b.id);
-            if(responseBody.moons.length == 0) delete responseBody.moons;
+            responseBody.moons = rPlanetoids.filter((b) => b.type != "planet").map((b) => b.id);
+            if (responseBody.moons.length == 0) delete responseBody.moons;
 
             responseBody.systems = [];
 
             const walk = (system, parent) => {
-                if(system.type == 'subsystem') {
-                    if(system.children.length > 1) {
+                if (system.type == "subsystem") {
+                    if (system.children.length > 1) {
                         let ret = {
                             id: this.generateId(),
-                            type: system.children.length == 2 ? 'simplex' : 'multiplex',
+                            type: system.children.length == 2 ? "simplex" : "multiplex",
                             children: [],
-    
+
                             position: getVector(system.position),
                             velocity: getVector(system.velocity)
                         };
 
                         const ncs = numConSet(system, ret);
 
-                        ncs('period');
-                        ncs('eccentricity');
-                        ncs('apoapsis');
-                        ncs('periapsis');
-    
-                        ncs('inclination');
-                        ncs('argumentOfPeriapsis');
-                        ncs('longitudeOfAscendingNode');
-                        ncs('meanAnomaly');
-                        ncs('meanAnomalyAtEpoch');
+                        ncs("period");
+                        ncs("eccentricity");
+                        ncs("apoapsis");
+                        ncs("periapsis");
 
-                        if(parent) ret.parent = parent.id;
-                        ncs('subType');
+                        ncs("inclination");
+                        ncs("argumentOfPeriapsis");
+                        ncs("longitudeOfAscendingNode");
+                        ncs("meanAnomaly");
+                        ncs("meanAnomalyAtEpoch");
 
-                        for(let x = 0; x < system.children.length; x++) {
+                        if (parent) ret.parent = parent.id;
+                        ncs("subType");
+
+                        for (let x = 0; x < system.children.length; x++) {
                             const child = walk(system.children[x], ret);
 
                             ret.children.push(child.id);
@@ -1178,27 +1201,27 @@ export default class SystemGenerator {
                         type: system.type,
 
                         position: getVector(system.position),
-                        velocity: getVector(system.velocity),
+                        velocity: getVector(system.velocity)
                     };
-                    
+
                     const ncs = numConSet(system, ret);
 
-                    ncs('period');
-                    ncs('eccentricity');
-                    ncs('apoapsis');
-                    ncs('periapsis');
+                    ncs("period");
+                    ncs("eccentricity");
+                    ncs("apoapsis");
+                    ncs("periapsis");
 
-                    ncs('inclination');
-                    ncs('argumentOfPeriapsis');
-                    ncs('longitudeOfAscendingNode');
-                    ncs('meanAnomaly');
-                    ncs('meanAnomalyAtEpoch');
+                    ncs("inclination");
+                    ncs("argumentOfPeriapsis");
+                    ncs("longitudeOfAscendingNode");
+                    ncs("meanAnomaly");
+                    ncs("meanAnomalyAtEpoch");
 
-                    if(parent) ret.parent = parent.id;
-                    responseBody.bodies.filter(b => b.id == system.id)[0].parentSystem = ret.id;
+                    if (parent) ret.parent = parent.id;
+                    responseBody.bodies.filter((b) => b.id == system.id)[0].parentSystem = ret.id;
                     responseBody.systems.push(ret);
                     return ret;
-                }                
+                }
             };
             responseBody.rootSystem = walk(system).id;
         }
@@ -1208,39 +1231,37 @@ export default class SystemGenerator {
         return finalSystem;
     }
 
-    _calculateEularValues(body, parentMass) {
-
-        const toRadians = (deg) => { return deg/180 * Math.PI; };
-        const fromRadians = (rad) => { return rad/Math.PI * 180; };
+    _calculateEularValues(body) {
+        const toRadians = (deg) => {
+            return (deg / 180) * Math.PI;
+        };
 
         const a = (body.apoapsis + body.periapsis) / 2;
         const ec = body.eccentricity;
-        const i = body.inclination;// / 180 * Math.PI;
-        const o0 = body.longitudeOfAscendingNode;// / 180 * Math.PI;
-        const w0 = body.argumentOfPeriapsis;// / 180 * Math.PI;
-        const m0 = body.meanAnomaly;// / 180 * Math.PI;
-
-        const Mass = parentMass + body.mass;
+        const i = body.inclination; // / 180 * Math.PI;
+        const o0 = body.longitudeOfAscendingNode; // / 180 * Math.PI;
+        const w0 = body.argumentOfPeriapsis; // / 180 * Math.PI;
+        const m0 = body.meanAnomaly; // / 180 * Math.PI;
 
         // Eccentric anomaly
         // Make sure we have things in radians before we start.
         //
         const rM0 = toRadians(m0);
         let eca = rM0;
-        while (true)
-        {
-            const dEca = (eca - ec * Math.sin(eca) + rM0) / (1 - ec * Math.cos(eca)); 
+        while (true) {
+            const dEca = (eca - ec * Math.sin(eca) + rM0) / (1 - ec * Math.cos(eca));
             eca -= dEca;
-            if(Math.abs(dEca) < 0.000001) break;
+            if (Math.abs(dEca) < 0.000001) break;
         }
 
-        const n = 2 * Math.PI / body.period;
+        const n = (2 * Math.PI) / body.period;
 
         const p = a * (Math.cos(eca) - ec);
-        const q = a * Math.sin(eca) * Math.sqrt(1 - Math.pow(ec,2));
+        const q = a * Math.sin(eca) * Math.sqrt(1 - Math.pow(ec, 2));
 
-        const vP = - a * Math.sin(eca) * n / (1 - ec * Math.cos(eca));
-        const vQ = a * Math.cos(eca) * Math.sqrt(1 - Math.pow(ec,2)) * n / (1 - ec * Math.cos(eca));
+        const vP = (-a * Math.sin(eca) * n) / (1 - ec * Math.cos(eca));
+        const vQ =
+            (a * Math.cos(eca) * Math.sqrt(1 - Math.pow(ec, 2)) * n) / (1 - ec * Math.cos(eca));
 
         const pos = vec3.fromValues(q, -p, 0);
 
@@ -1265,41 +1286,58 @@ export default class SystemGenerator {
 
 class PregeneratedSystem {
     constructor(system) {
-
         this.system = system;
 
         let children = [];
         let star = 0;
         let planet = 0;
         let moon = 0;
-        const walk = (system, parent) => {
-            if(system.type == 'subsystem') system.children.forEach((c) => { walk(c, system);});
+        const walk = (system) => {
+            if (system.type == "subsystem")
+                system.children.forEach((c) => {
+                    walk(c, system);
+                });
             else {
-                if(system.type == 'star') { star++; planet=0; }
-                if(system.type == 'planet') { planet++; moon=0; }
-                if(system.type == 'moon') moon++;
-                children.push(new Body({
-                    position: system.position,
-                    velocity: system.velocity,
-                    mass: system.mass,
-                    radius: system.radius,
-                    density: 1,//system.density,
-                    color: system.type == 'star' ? "#f00" 
-                        : system.type == 'planet' ? "#fff"
-                        : "#88f",
-                    name: system.type == 'star' ? `S${star}` 
-                    : system.type == 'planet' ? `P${star}-${planet}`
-                    : null,
-                }));
+                if (system.type == "star") {
+                    star++;
+                    planet = 0;
+                }
+                if (system.type == "planet") {
+                    planet++;
+                    moon = 0;
+                }
+                if (system.type == "moon") moon++;
+                children.push(
+                    new Body({
+                        position: system.position,
+                        velocity: system.velocity,
+                        mass: system.mass,
+                        radius: system.radius,
+                        density: 1, //system.density,
+                        color:
+                            system.type == "star"
+                                ? "#f00"
+                                : system.type == "planet"
+                                  ? "#fff"
+                                  : "#88f",
+                        name:
+                            system.type == "star"
+                                ? `S${star}`
+                                : system.type == "planet"
+                                  ? `P${star}-${planet}`
+                                  : system.type == "moon"
+                                    ? `M${star}-${planet}-${moon}`
+                                    : null
+                    })
+                );
             }
         };
 
         walk(system, null);
 
-        this.objects = { 
+        this.objects = {
             children: children
         };
-        
     }
 }
 

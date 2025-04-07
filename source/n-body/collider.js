@@ -1,29 +1,27 @@
-import {vec3} from 'gl-matrix';
+import { vec3 } from "gl-matrix";
 
 export default class Collider {
     constructor(game, properties = {}) {
-
         this._game = game;
 
         this.rocheLimitOn = false;
-        if (typeof (properties.rocheLimitOn) === 'boolean') {
+        if (typeof properties.rocheLimitOn === "boolean") {
             this.rocheLimitOn = properties.rocheLimitOn;
         }
     }
 
     update(tDelta) {
-        // Grab all world objects that have radus.
-        const objs = this._game.filter("body").filter(function (obj) { return obj.radius > 0; });
+        // Grab all world objects that have radius.
+        const objs = this._game.filter("body").filter(function (obj) {
+            return obj.radius > 0;
+        });
 
         const remove = [];
-        const add = [];
         // Compare each one and calculate distance to each other to see if they've collided.
         for (let i = 0; i < objs.length; i++) {
-            if (objs[i].Removed)
-                continue;
+            if (objs[i].Removed) continue;
             for (let j = i + 1; j < objs.length; j++) {
-                if (objs[j].Removed)
-                    continue;
+                if (objs[j].Removed) continue;
 
                 const p1 = objs[i].position;
                 const p2 = objs[j].position;
@@ -33,7 +31,6 @@ export default class Collider {
 
                 const r1 = objs[i].radius;
                 const r2 = objs[j].radius;
-
 
                 const sDiff = vec3.sub(vec3.create(), p1, p2);
                 const r = r1 + r2;
@@ -57,7 +54,13 @@ export default class Collider {
                         const d = b * b - a * c;
                         if (d > 0) {
                             collisionTime = (-b - Math.sqrt(d)) / a;
-                            console.log("collisionTime " + collisionTime + "(" + collisionTime / tDelta + ")");
+                            console.log(
+                                "collisionTime " +
+                                    collisionTime +
+                                    "(" +
+                                    collisionTime / tDelta +
+                                    ")"
+                            );
                             // If t is greater than tDelta, then we won't collide in this interval.
                             // If it is less than 2xtDelta, then we will next time...
                             if (collisionTime > tDelta) {
@@ -75,7 +78,6 @@ export default class Collider {
 
                 // Now we know if we're going to collide, and when.
                 if (collisionTime >= 0) {
-                    
                     // This isn't exact. I don't all the primary body to continue until the time of impact
                     // before combining the mass and velocity. So from the start of the next interval (during
                     // which they should impact at sometime), they will be moving already combined.
@@ -95,42 +97,43 @@ export default class Collider {
                     vec3.scale(primary.velocity, primary.velocity, primary.mass);
                     vec3.scale(secondary.velocity, secondary.velocity, secondary.mass);
                     vec3.add(primary.velocity, primary.velocity, secondary.velocity);
-                    vec3.scale(primary.velocity, primary.velocity, 1/(primary.mass + secondary.mass));
+                    vec3.scale(
+                        primary.velocity,
+                        primary.velocity,
+                        1 / (primary.mass + secondary.mass)
+                    );
 
                     // Then calc mass.
                     primary.mass = primary.mass + secondary.mass;
                     // Recalc radius.
-                    primary.radius = Math.pow(primary.mass / (4 * Math.PI / 3), 1 / 3);
+                    primary.radius = Math.pow(primary.mass / ((4 * Math.PI) / 3), 1 / 3);
+                    // } else if (this.rocheLimitOn) {
+                    //     const m1 = objs[i].mass;
+                    //     const m2 = objs[j].mass;
 
-                } else if(this.rocheLimitOn) {
+                    //     let secondary = objs[i];
+                    //     let primary = objs[j];
+                    //     if (m1 > m2) {
+                    //         secondary = objs[j];
+                    //         primary = objs[i];
+                    //     }
+                    //     const rm = secondary.radius;
+                    //     const mM = primary.mass;
+                    //     const mm = secondary.mass;
 
-                    const m1 = objs[i].mass;
-                    const m2 = objs[j].mass;
-
-                    let secondary = objs[i];
-                    let primary = objs[j];
-                    if(m1 > m2) {
-                        secondary = objs[j];
-                        primary = objs[i];
-                    }
-                    const rm = secondary.radius;
-                    const mM = primary.mass;
-                    const mm = secondary.mass;
-
-                    const rDist = 1.26 * rm * Math.pow(mM / mm, 1 / 3);
-                    if (dist <= rDist) {
-                        // Split into multiples.
-                        console.log("Inside Roche Limit: " + objs[i].id + " and " + objs[j].id);
-                    }
+                    //     const rDist = 1.26 * rm * Math.pow(mM / mm, 1 / 3);
+                    //     if (dist <= rDist) {
+                    //         // Split into multiples.
+                    //         console.log("Inside Roche Limit: " + objs[i].id + " and " + objs[j].id);
+                    //     }
                 }
             }
         }
 
-        if (remove.length > 0)
-            console.log("Removed " + remove.length);
+        if (remove.length > 0) console.log("Removed " + remove.length);
 
         // Remove any that are combined
-        for(let x = 0; x < remove.length;x++) {
+        for (let x = 0; x < remove.length; x++) {
             this._game.removeGameObject(remove[x].id);
         }
     }

@@ -1,35 +1,37 @@
-import Camera from '../../core/camera';
+import Camera from "../../core/camera";
 
 export default class Canvas2DCamera extends Camera {
     constructor(canvas) {
         super();
 
-        if (!canvas)
-            throw "Camera must have a canvas to draw to!";
+        if (!canvas) throw "Camera must have a canvas to draw to!";
 
         // this will get reset when _fitToContainer is called.
-        this.size = {width: 0, height: 0 };
+        this.size = { width: 0, height: 0 };
         this.clearColor = "black";
 
         this.canvas = canvas;
-        this.context = this.canvas.getContext('2d');
+        this.context = this.canvas.getContext("2d");
 
-        this.drawCanvas = document.createElement('canvas');
-        this.drawContext = this.canvas.getContext('2d');
+        this.drawCanvas = document.createElement("canvas");
+        this.drawContext = this.canvas.getContext("2d");
 
         // Set to parent now.
         this._fitToContainer();
     }
 
     _fitToContainer() {
-        if(this.canvas.width != this.canvas.offsetWidth) this.canvas.width = this.canvas.offsetWidth;
-        if(this.canvas.height != this.canvas.offsetHeight) this.canvas.height = this.canvas.offsetHeight;
+        if (this.canvas.width != this.canvas.offsetWidth)
+            this.canvas.width = this.canvas.offsetWidth;
+        if (this.canvas.height != this.canvas.offsetHeight)
+            this.canvas.height = this.canvas.offsetHeight;
 
-        if(this.drawCanvas.width != this.canvas.width) this.drawCanvas.width = this.canvas.width;
-        if(this.drawCanvas.height != this.canvas.height) this.drawCanvas.height = this.canvas.height;
+        if (this.drawCanvas.width != this.canvas.width) this.drawCanvas.width = this.canvas.width;
+        if (this.drawCanvas.height != this.canvas.height)
+            this.drawCanvas.height = this.canvas.height;
 
-        if(this.size.width != this.canvas.width) this.size.width = this.canvas.width;
-        if(this.size.height != this.canvas.height) this.size.height = this.canvas.height;
+        if (this.size.width != this.canvas.width) this.size.width = this.canvas.width;
+        if (this.size.height != this.canvas.height) this.size.height = this.canvas.height;
     }
 
     // Clears the display. First step to draw.
@@ -43,7 +45,7 @@ export default class Canvas2DCamera extends Camera {
 
     // Performs any transforms or calculations required to set up this camera's
     // view based on it's updated properties.
-    calculateView(time) {
+    calculateView() {
         this._fitToContainer();
     }
 
@@ -68,8 +70,8 @@ export default class Canvas2DCamera extends Camera {
         obj.debugDraw(time, this, this.drawContext);
     }
 
-    // Draws anything in the back buffer to the display buffer.    
+    // Draws anything in the back buffer to the display buffer.
     drawDoubleBuffer() {
         this.context.drawImage(this.drawCanvas, 0, 0);
     }
-} 
+}

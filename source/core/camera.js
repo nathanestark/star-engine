@@ -10,6 +10,7 @@ export default class Camera {
 
     // Performs any transforms or calculations required to set up this camera's
     // view based on it's updated properties.
+    // eslint-disable-next-line no-unused-vars
     calculateView(tDelta) {}
 
     // Saves the view state in a stack so that further modifications of the view can
@@ -23,13 +24,13 @@ export default class Camera {
     drawObject(obj, time) {
         obj.draw(time, this);
     }
-    
+
     // Requests that the specified object debug draws itself on the canvas.
     debugDrawObject(obj, time) {
         obj.debugDraw(time, this);
     }
 
-    // If your camera requires double buffering, simply implement 'drawDoubleBuffer' to 
+    // If your camera requires double buffering, simply implement 'drawDoubleBuffer' to
     // perform the final draw from the back-buffer to the display buffer.
     /*
     drawDoubleBuffer() {

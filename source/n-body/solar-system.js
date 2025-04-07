@@ -1,74 +1,108 @@
-import {vec2, vec3, quat} from 'gl-matrix';
+import { vec3 } from "gl-matrix";
 
-import Body from './body';
+import Body from "./body";
 
 export default class SolarSystemObjects {
-    constructor(gravity) {
-        this.objects = { 
+    constructor() {
+        this.objects = {
             children: []
         };
 
-        let convert = function(coord) {
-            let parts = coord.replace("  ", " ").replace("  ", " ").split(' ');
-            return vec3.fromValues(parseFloat(parts[0]) * 1000,
-                                   parseFloat(parts[1]) * 1000,
-                                   parseFloat(parts[2]) * 1000);
+        let convert = function (coord) {
+            let parts = coord.replace("  ", " ").replace("  ", " ").split(" ");
+            return vec3.fromValues(
+                parseFloat(parts[0]) * 1000,
+                parseFloat(parts[1]) * 1000,
+                parseFloat(parts[2]) * 1000
+            );
         };
 
-        this.objects.children.push(new Body({
-            position: vec3.fromValues(0, 0, 0),
-            velocity: vec3.fromValues(0, 0, 0),
-            mass: 1988550000000000000000000000000, // kg
-            radius: 696342000, // m
-            color: "#e9e8e2",
-            name: "Sun"
-        }));
-        
-        this.objects.children.push(new Body({
-            position: convert("-5.712159217109616E+07 -2.768031363154984E+07  2.978624897562783E+06"),
-            velocity: convert("1.119288899412350E+01 -4.171662896323060E+01 -4.435605216855379E+00"),
-            mass: 330200000000000000000000, // kg
-            radius: 2439700, // m 
-            color: "#e9e8e2",
-            name: "Mercury"
-        }));
-        
-        this.objects.children.push(new Body({
-            position: convert("5.694739460521039E+07 -9.274270607050946E+07 -4.557883971697539E+06"),
-            velocity: convert("2.960971536139958E+01  1.820477076651326E+01 -1.459048431903065E+00"),
-            mass: 4868500000000000000000000, // kg
-            radius: 6051800, // m  
-            color: "#e9e8e2",
-            name: "Venus"
-        }));
-        
-        this.objects.children.push(new Body({
-            position: convert("1.264592801679844E+08  7.833040666290237E+07 -3.464586605969816E+03"),
-            velocity: convert("-1.616516421746471E+01  2.522294601446111E+01 -1.918752003394530E-03"),
-            mass: 5973600000000000000000000, // kg
-            radius: 6371000, //m 
-            color: "#e9e8e2",
-            name: "Earth"
-        }));
-        {
-            this.objects.children.push(new Body({
-                position: convert("1.261270860702455E+08  7.853762786903098E+07 -1.161962384453788E+04"),
-                velocity: convert("-1.673771965809977E+01  2.440613215219513E+01  8.420971395564081E-02"),
-                mass: 7.34767309E+22, // kg
-                radius: 1737400, //m 
+        this.objects.children.push(
+            new Body({
+                position: vec3.fromValues(0, 0, 0),
+                velocity: vec3.fromValues(0, 0, 0),
+                mass: 1988550000000000000000000000000, // kg
+                radius: 696342000, // m
                 color: "#e9e8e2",
-                name: "Luna"
-            }));
+                name: "Sun"
+            })
+        );
+
+        this.objects.children.push(
+            new Body({
+                position: convert(
+                    "-5.712159217109616E+07 -2.768031363154984E+07  2.978624897562783E+06"
+                ),
+                velocity: convert(
+                    "1.119288899412350E+01 -4.171662896323060E+01 -4.435605216855379E+00"
+                ),
+                mass: 330200000000000000000000, // kg
+                radius: 2439700, // m
+                color: "#e9e8e2",
+                name: "Mercury"
+            })
+        );
+
+        this.objects.children.push(
+            new Body({
+                position: convert(
+                    "5.694739460521039E+07 -9.274270607050946E+07 -4.557883971697539E+06"
+                ),
+                velocity: convert(
+                    "2.960971536139958E+01  1.820477076651326E+01 -1.459048431903065E+00"
+                ),
+                mass: 4868500000000000000000000, // kg
+                radius: 6051800, // m
+                color: "#e9e8e2",
+                name: "Venus"
+            })
+        );
+
+        this.objects.children.push(
+            new Body({
+                position: convert(
+                    "1.264592801679844E+08  7.833040666290237E+07 -3.464586605969816E+03"
+                ),
+                velocity: convert(
+                    "-1.616516421746471E+01  2.522294601446111E+01 -1.918752003394530E-03"
+                ),
+                mass: 5973600000000000000000000, // kg
+                radius: 6371000, //m
+                color: "#e9e8e2",
+                name: "Earth"
+            })
+        );
+        {
+            this.objects.children.push(
+                new Body({
+                    position: convert(
+                        "1.261270860702455E+08  7.853762786903098E+07 -1.161962384453788E+04"
+                    ),
+                    velocity: convert(
+                        "-1.673771965809977E+01  2.440613215219513E+01  8.420971395564081E-02"
+                    ),
+                    mass: 7.34767309e22, // kg
+                    radius: 1737400, //m
+                    color: "#e9e8e2",
+                    name: "Luna"
+                })
+            );
         }
-        
-        this.objects.children.push(new Body({
-            position: convert("1.845270655123906E+08 -9.280895724399856E+07 -6.473556801981751E+06"),
-            velocity: convert("1.180981129374965E+01  2.372068075334774E+01  2.072432727324305E-01"),
-            mass: 641850000000000000000000, // kg
-            radius: 3389500, // m
-            color: "#e9e8e2",
-            name: "Mars"
-        }));
+
+        this.objects.children.push(
+            new Body({
+                position: convert(
+                    "1.845270655123906E+08 -9.280895724399856E+07 -6.473556801981751E+06"
+                ),
+                velocity: convert(
+                    "1.180981129374965E+01  2.372068075334774E+01  2.072432727324305E-01"
+                ),
+                mass: 641850000000000000000000, // kg
+                radius: 3389500, // m
+                color: "#e9e8e2",
+                name: "Mars"
+            })
+        );
         // Move too fast/too close to predict at high speeds.
         /*{
             this.objects.children.push(new Body({
@@ -89,15 +123,21 @@ export default class SolarSystemObjects {
                 name: "Deimos"
             }));
         }*/
-        
-        this.objects.children.push(new Body({
-            position: convert("-8.117479716576955E+08 -7.908365271344987E+07  1.849227293866055E+07"),
-            velocity: convert("1.111831869435202E+00 -1.239931464570384E+01  2.660180174566662E-02"),
-            mass: 1898600000000000000000000000, // kg
-            radius: 69911000, // m
-            color: "#e9e8e2",
-            name: "Jupiter"
-        }));
+
+        this.objects.children.push(
+            new Body({
+                position: convert(
+                    "-8.117479716576955E+08 -7.908365271344987E+07  1.849227293866055E+07"
+                ),
+                velocity: convert(
+                    "1.111831869435202E+00 -1.239931464570384E+01  2.660180174566662E-02"
+                ),
+                mass: 1898600000000000000000000000, // kg
+                radius: 69911000, // m
+                color: "#e9e8e2",
+                name: "Jupiter"
+            })
+        );
         // Move too fast/too close to predict at high speeds.
         /*{
             this.objects.children.push(new Body({
@@ -136,15 +176,21 @@ export default class SolarSystemObjects {
                 name: "Europa"
             }));
         }*/
-        
-        this.objects.children.push(new Body({
-            position: convert("-3.319983872084137E+08 -1.464702298462686E+09  3.867402850039631E+07"),
-            velocity: convert("8.894875779460287E+00 -2.173824673813452E+00 -3.168643893414061E-01"),
-            mass: 568460000000000000000000000, // kg
-            radius: 58232000, // m
-            color: "#e9e8e2",
-            name: "Saturn"
-        }));
+
+        this.objects.children.push(
+            new Body({
+                position: convert(
+                    "-3.319983872084137E+08 -1.464702298462686E+09  3.867402850039631E+07"
+                ),
+                velocity: convert(
+                    "8.894875779460287E+00 -2.173824673813452E+00 -3.168643893414061E-01"
+                ),
+                mass: 568460000000000000000000000, // kg
+                radius: 58232000, // m
+                color: "#e9e8e2",
+                name: "Saturn"
+            })
+        );
         // Move too fast/too close to predict at high speeds.
         /*{
             this.objects.children.push(new Body({
@@ -210,32 +256,50 @@ export default class SolarSystemObjects {
                 name: "Mimas"
             }));
         }*/
-        
-        this.objects.children.push(new Body({
-            position: convert("2.759250748323915E+09  1.135821330762241E+09 -3.150929789768779E+07"),
-            velocity: convert("-2.639269061567873E+00  5.967885294896440E+00  5.632370739997983E-02"),
-            mass: 86832000000000000000000000, // kg
-            radius: 25362000, // m
-            color: "#e9e8e2",
-            name: "Uranus"
-        }));
-        
-        this.objects.children.push(new Body({
-            position: convert("4.228767141988930E+09 -1.480414746887066E+09 -6.696904625910568E+07"),
-            velocity: convert("1.761898374990371E+00  5.150165602780147E+00 -1.469294934753780E-01"),
-            mass: 102430000000000000000000000, // kg
-            radius: 24622000, // m
-            color: "#e9e8e2",
-            name: "Neptune"
-        }));
-        
-        this.objects.children.push(new Body({
-            position: convert("1.413855749362500E+09 -4.760100107320454E+09  1.002026373460095E+08"),
-            velocity: convert("5.312482020767150E+00  4.070865177816018E-01 -1.565157366677656E+00"),
-            mass: 1310500000000000000000, // kg
-            radius: 1186000, // m
-            color: "#e9e8e2",
-            name: "Pluto"
-        }));
+
+        this.objects.children.push(
+            new Body({
+                position: convert(
+                    "2.759250748323915E+09  1.135821330762241E+09 -3.150929789768779E+07"
+                ),
+                velocity: convert(
+                    "-2.639269061567873E+00  5.967885294896440E+00  5.632370739997983E-02"
+                ),
+                mass: 86832000000000000000000000, // kg
+                radius: 25362000, // m
+                color: "#e9e8e2",
+                name: "Uranus"
+            })
+        );
+
+        this.objects.children.push(
+            new Body({
+                position: convert(
+                    "4.228767141988930E+09 -1.480414746887066E+09 -6.696904625910568E+07"
+                ),
+                velocity: convert(
+                    "1.761898374990371E+00  5.150165602780147E+00 -1.469294934753780E-01"
+                ),
+                mass: 102430000000000000000000000, // kg
+                radius: 24622000, // m
+                color: "#e9e8e2",
+                name: "Neptune"
+            })
+        );
+
+        this.objects.children.push(
+            new Body({
+                position: convert(
+                    "1.413855749362500E+09 -4.760100107320454E+09  1.002026373460095E+08"
+                ),
+                velocity: convert(
+                    "5.312482020767150E+00  4.070865177816018E-01 -1.565157366677656E+00"
+                ),
+                mass: 1310500000000000000000, // kg
+                radius: 1186000, // m
+                color: "#e9e8e2",
+                name: "Pluto"
+            })
+        );
     }
 }

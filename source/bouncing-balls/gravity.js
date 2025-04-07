@@ -1,4 +1,4 @@
-import {vec2} from 'gl-matrix';
+import { vec2 } from "gl-matrix";
 
 export default class Gravity {
     constructor(game, properties = {}) {
@@ -7,27 +7,27 @@ export default class Gravity {
         this._game = game;
 
         this.g = -9.8;
-        if (typeof (properties.g) === 'number') {
+        if (typeof properties.g === "number") {
             this.g = properties.g;
         }
     }
 
-    update(tDelta) {
+    update() {
         // Grab all world objects that have mass.
         const objs = this._game.filter("ball");
 
         // Compare each one and calculate attraction via newton
         for (let i = 0; i < objs.length; i++) {
-            if(!objs[i].grounded) {
+            if (!objs[i].grounded) {
                 const m = objs[i].mass;
 
                 const tf = objs[i].totalForce;
 
                 // Fabricate direction of gravity.
-                const dir = vec2.fromValues(0,1);
+                const dir = vec2.fromValues(0, 1);
 
                 // Normalize direction
-                vec2.normalize(dir, dir);               
+                vec2.normalize(dir, dir);
 
                 // Then scalar force of attraction.
                 const f = this.g * m;

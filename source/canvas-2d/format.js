@@ -1,3 +1,3 @@
 export function formatVector(vector) {
-    return `(${vector[0]}, ${vector[1]})`
+    return `(${vector[0]}, ${vector[1]})`;
 }
