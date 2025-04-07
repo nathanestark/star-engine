@@ -191,7 +191,6 @@ class Math2D {
         // Find out if they're moving towards each other.
         const temp = vec2.create();
         const temp2 = vec2.create();
-        let dot = 0;
         vec2.sub(temp,v1,v2);
         vec2.sub(temp2,p1,p2);
         return vec2.dot(temp, temp2) < 0;
@@ -239,7 +238,7 @@ class Math2D {
             // Otherwise, just use our info.
             // Reflect us across the normal.
             vec2.scale(temp, normal, (1 + coefficientOfRestitution) * vec2.dot(normal, obj1Velocity));
-
+        
             // Apply to our current velocity, which may have already changed due to other
             // collisions this tick.
             vec2.sub(out, curVelocity, temp);

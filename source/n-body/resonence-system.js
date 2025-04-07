@@ -270,6 +270,7 @@ export default class ResonenceWorldObjects {
                     satellites.push(this.generateBody(cMass, body, cPeriod));
                 }
             }
+            console.log(satellites.length);
             body.satellites = satellites;
         }
 

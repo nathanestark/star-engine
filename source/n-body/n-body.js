@@ -12,12 +12,13 @@ import Body from './body';
 import RandomWorldObjects from './random-system';
 import ResonenceWorldObjects from './resonence-system';
 import SolarSystemObjects from './solar-system';
+import Generator, { PregeneratedSystem as PregeneratedSystemObjects } from './system-generator';
 
 export default class SolarSystem extends Game {
     constructor(canvases) {
         super();
 
-        this.setTimeScale(3153600);
+        this.setTimeScale(0);//3153600);
 
         const hudData = {
             children: [
@@ -40,8 +41,9 @@ export default class SolarSystem extends Game {
 
 
 //        const worldObjects = new SolarSystemObjects(gravity).objects;
-//        const worldObjects = new RandomWorldObjects(gravity).objects;
-        const worldObjects = new ResonenceWorldObjects(gravity).objects;
+        const worldObjects = new RandomWorldObjects(gravity).objects;
+//        const worldObjects = new ResonenceWorldObjects(gravity).objects;
+//        const worldObjects = new PregeneratedSystemObjects(new Generator().generateSystem()).objects;
         worldObjects.childrenSort = (camera, children) => {
             // Sort children by view depth.
             let ret = children.slice();
@@ -59,12 +61,22 @@ export default class SolarSystem extends Game {
             return ret;
         };
 
-        const camera1 = new Camera(canvases[0], { view: "x", zoom: 0.0000000005 });
-        const fCamera1 = new FollowCamera(canvases[0], { view: "x", zoom: 0.0000000005, disabled: true });
-        const camera2 = new Camera(canvases[1], { view: "y", zoom: 0.0000000005 });
-        const fCamera2 = new FollowCamera(canvases[1], { view: "y", zoom: 0.0000000005, disabled: true });
-        const camera3 = new Camera(canvases[2], { view: "z", zoom: 0.0000000005 });
-        const fCamera3 = new FollowCamera(canvases[2], { view: "z", zoom: 0.0000000005, disabled: true });
+        // Determine initial zoom based on objects in scene.
+        const maxX = worldObjects.children.reduce((p, o) => Math.max(p, Math.abs(o.position[0]) + o.radius), 0);
+        const maxY = worldObjects.children.reduce((p, o) => Math.max(p, Math.abs(o.position[1]) + o.radius), 0);
+        const maxZ = worldObjects.children.reduce((p, o) => Math.max(p, Math.abs(o.position[2]) + o.radius), 0);
+
+        const zoomX = Math.min(canvases[0].width / maxX, canvases[0].height / maxY);
+        const zoomY = Math.min(canvases[1].width / maxX, canvases[1].height / maxZ);
+        const zoomZ = Math.min(canvases[2].width / maxY, canvases[2].height / maxZ);
+
+
+        const camera1 = new Camera(canvases[0], { view: "x", zoom: zoomX });
+        const fCamera1 = new FollowCamera(canvases[0], { view: "x", zoom: zoomX, disabled: true });
+        const camera2 = new Camera(canvases[1], { view: "y", zoom: zoomY });
+        const fCamera2 = new FollowCamera(canvases[1], { view: "y", zoom: zoomY, disabled: true });
+        const camera3 = new Camera(canvases[2], { view: "z", zoom: zoomZ });
+        const fCamera3 = new FollowCamera(canvases[2], { view: "z", zoom: zoomZ, disabled: true });
 
         fCamera1.isDisabled = fCamera2.isDisabled = fCamera3.isDisabled = true;
 
@@ -82,7 +94,7 @@ export default class SolarSystem extends Game {
         let target = null;
         let lastTarget = null
         const pos = [0,0];
-        document.addEventListener('mousedown', function (e) {
+        document.addEventListener('mousedown',  (e) => {
             lastTarget = e.target;
             e.target.focus()
             if (e.button == 2) {
@@ -95,7 +107,7 @@ export default class SolarSystem extends Game {
             }
         });
 
-        document.addEventListener('mouseup', function (e) {
+        document.addEventListener('mouseup',  (e) => {
             if (e.button == 2) {
                 target = null;
 
@@ -104,7 +116,7 @@ export default class SolarSystem extends Game {
             }
         });
 
-        document.addEventListener('mousemove', function (e) {
+        document.addEventListener('mousemove',  (e) => {
             let camera = null;
             let fCamera = null;
             if (target == canvases[0]) {
@@ -129,7 +141,7 @@ export default class SolarSystem extends Game {
                 pos[1] = e.pageY;
             }
         });
-        document.addEventListener('mousewheel', function (e) {
+        document.addEventListener('mousewheel',  (e) => {
             lastTarget = e.target;
             let cameras = [];
             if (e.target == canvases[0]) {
@@ -156,7 +168,7 @@ export default class SolarSystem extends Game {
             e.preventDefault();
             return false;
         });
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', (e) => {
             if(e.which == 107 || e.which == 109) {
                 let cameras = [];
                 if (e.target == canvases[0]) {
@@ -177,6 +189,11 @@ export default class SolarSystem extends Game {
                 });
                 e.preventDefault();
                 return false;
+            } else if(e.which == 32) {
+                if(this.isPaused())
+                    this.resume();
+                else
+                    this.pause();
             }
         });
 
@@ -235,12 +252,24 @@ export default class SolarSystem extends Game {
                         camera1.isDisabled = camera2.isDisabled = camera3.isDisabled = true;
                         fCamera1.isDisabled = fCamera2.isDisabled = fCamera3.isDisabled = false;
                         fCamera1.target = fCamera2.target = fCamera3.target = this.selected;
+
+/*                        let offset = null;
+                        if(!camera.target)
+                            offset = vec2.clone(camera.position);
+                        else
+                            offset = vec2.clone(camera.offset);
+
+                    vec2.sub(offset, offset, this.selected);*/
+
+                        fCamera1.offset = vec2.create();
+                        fCamera2.offset = vec2.create();
+                        fCamera3.offset = vec2.create();
                     }
                 }
                 e.preventDefault();
                 return false;
             });
-            canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); return false; });
+            canvas.addEventListener('contextmenu',  (e) => { e.preventDefault(); return false; });
         }
 
         // Add everything in to the game. Order matters for both updates and draws.
@@ -296,5 +325,22 @@ export default class SolarSystem extends Game {
 
     getDrawnOrbitLength() {
         return this.drawnOrbitLength;
+    }
+
+    isPaused() {
+        return this._timeScale == 0;
+    }
+
+    pause() {
+        if(!this.isPaused()) {
+            this._lastTimeScale = this._timeScale;
+            this._timeScale = 0;
+        }
+    }
+
+    resume() {
+        if(this.isPaused()) {
+            this._timeScale = this._lastTimeScale;
+        }
     }
 }

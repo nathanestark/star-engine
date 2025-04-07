@@ -15,11 +15,11 @@ export default class BouncingBalls extends Game {
 
         this.debug = false;
 
-        this.setTimeScale(1);
+        this.setTimeScale(10);
 
         const worldBounds = new WorldBounds({
             position: vec2.fromValues(-250, -250),
-            size: vec2.fromValues(500, 500)
+            size: vec2.fromValues(10000, 10000)
         });
 
         const hudData = {
@@ -33,8 +33,11 @@ export default class BouncingBalls extends Game {
             }
         };
 
-        const gravity = new Gravity(this);
-        const collisionDetection = new CollisionDetection(this, [vec2.fromValues(-500, -500), vec2.fromValues(500, 500)]);
+        const gravity = new Gravity(this, { g: -9.8});
+        const collisionDetection = new CollisionDetection(this, [
+            vec2.copy(vec2.create(), worldBounds.position), 
+            vec2.copy(vec2.create(), worldBounds.size)
+        ]);
 
         const game = this;
 
@@ -170,7 +173,7 @@ export default class BouncingBalls extends Game {
             ]
         }
 
-        let balls = 350;
+        let balls = 100;
         let bX = Math.floor(Math.sqrt(balls));
         let bY = Math.ceil(balls/bX);
         let padX = (worldBounds.size[0] / bX);
@@ -183,21 +186,26 @@ export default class BouncingBalls extends Game {
                 let r = 1;//Math.random();
                 worldObjects.children.push(
                     new Ball(game, {
-                        radius: r*10,
+                        radius: r*100,
                         mass: r,
-                        elasticity: 1,
+                        elasticity: 0.8,
+                        rollDrag: 0.05,
                         position: vec2.fromValues(worldBounds.position[0] + padX/2 + x*padX, 
                                                   worldBounds.position[1] + padY/2 + y*padY),   
                         velocity: vec2.fromValues(10* (1-Math.random()*2), 10*(1-Math.random()*2)),
+                        //velocity: vec2.fromValues(0,0),
 
-                        color: "white"
+                        color: tBalls == 0 ? "white" : "red"
                     })
                 );
                 tBalls++;
             }            
         }
 
-        const camera = new Camera(canvas, { zoom: 1 });
+        const camera = new Camera(canvas, { 
+            position: vec2.scaleAndAdd(vec2.create(), worldBounds.position, worldBounds.size, 0.5), 
+            zoom: 0.05 
+        });
 
         const cameras = {
             children: [
@@ -321,7 +329,7 @@ export default class BouncingBalls extends Game {
         this.addGameObject(worldObjects);
 
         // Then gravity
-        //this.addGameObject(gravity);
+        this.addGameObject(gravity);
 
         // Then collider
         this.addGameObject(collisionDetection);

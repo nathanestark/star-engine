@@ -19,21 +19,29 @@ export default class ColliderOperations {
             vec2.sub(temp, collider1.velocity, collider2.velocity);
             const v = vec2.length(temp);
 
-            t = (p - (collider1.radius + collider2.radius + Number.EPSILON)) / v;
-
-            // Negate t.
-            t = -t;
-
             const pos1 = vec2.create();
-            // Calculate displacement by t (should be negative time)
-            // to get position at time of collision.
-            vec2.scale(pos1, collider1.velocity, t);
-            vec2.add(pos1, collider1.position, pos1);
-
-            // Get other object's collision position
             const pos2 = vec2.create();
-            vec2.scale(pos2, collider2.velocity, t);
-            vec2.add(pos2, collider2.position, pos2);
+
+            if (v == 0) {
+                t = 0;
+                vec2.copy(pos1, collider1.position)
+                vec2.copy(pos2, collider2.position)
+            } else {
+
+                t = (p - (collider1.radius + collider2.radius + Number.EPSILON)) / v;
+
+                // Negate t.
+                t = -t;
+
+                // Calculate displacement by t (should be negative time)
+                // to get position at time of collision.
+                vec2.scale(pos1, collider1.velocity, t);
+                vec2.add(pos1, collider1.position, pos1);
+
+                // Get other object's collision position
+                vec2.scale(pos2, collider2.velocity, t);
+                vec2.add(pos2, collider2.position, pos2);
+            }
 
             // Calculate the normals of the collision
             const norm1 = vec2.create();
@@ -43,8 +51,29 @@ export default class ColliderOperations {
             const norm2 = vec2.create();
             vec2.negate(norm2, norm1);
 
+            // Adjust the one applying the most force to the other.
+            const len1 = vec2.dot(norm1, collider1.parent.totalForce);
+            const len2 = vec2.dot(norm2, collider2.parent.totalForce);
+
+            // Make sure the position is always outside. We'll only
+            // adjust the first one.
+            if (len1 >= len2) {
+                const prev = vec2.clone(pos1)
+                vec2.scale(pos1, norm2, collider1.radius + collider2.radius)
+                vec2.add(pos1, pos1, pos2)
+                // console.log("Adjusting", len1,">=", len2, `(${prev[0]},${prev[1]})`, `(${pos1[0]},${pos1[1]})`)
+            } else {
+                const prev = vec2.clone(pos2)
+                vec2.scale(pos2, norm1, collider1.radius + collider2.radius)
+                vec2.add(pos2, pos2, pos1)
+                // console.log("Adjusting", len1,">=", len2, `(${prev[0]},${prev[1]})`, `(${pos2[0]},${pos2[1]})`)
+            }
+
             // Calculate time left.
-            t = -t; 
+            t = -t;
+            if (t == Number.POSITIVE_INFINITY || t == Number.NEGATIVE_INFINITY) {
+                throw "Bad timeLeft"
+            }
 
             return [{
                 obj1: {
@@ -80,150 +109,217 @@ export default class ColliderOperations {
         if(!Math2D.pointInBoundingBox(circleCollider.position, points)) {
             const collisions = [];
 
-            // Check if we hit the bottom Y plane.
-            if((points[1][1] - circleCollider.position[1]) < 0)
-            {
-                // Calculate how long ago the collision took place.
-                let t = (Math.abs(circleCollider.position[1] - points[1][1]) 
-                            - Number.EPSILON) / Math.abs(circleCollider.velocity[1]);
+            [[1,1],[0,0],[1,0],[0,1]].forEach(([pI,axis]) => {
+                let collided = pI
+                    ? (points[pI][axis] - circleCollider.position[axis]) <= 0
+                    : (points[pI][axis] - circleCollider.position[axis]) >= 0
+                if(collided) {
+                    let t = 0
+                    const pos1 = vec2.create();
+                    if (circleCollider.velocity[axis] == 0) {
+                        vec2.copy(pos1, circleCollider.position)
+                    } else {
+                        // Calculate how long ago the collision took place.
+                        t = (Math.abs(circleCollider.position[axis] - points[pI][axis]) 
+                                - Number.EPSILON) / Math.abs(circleCollider.velocity[axis]);
 
-                // Negate t.
-                t = -t;
+                        // Negate t.
+                        t = -t;
 
-                const pos1 = vec2.create();
-                // Calculate displacement by t (should be negative time)
-                // to get position at time of collision.
-                vec2.scale(pos1, circleCollider.velocity, t);
-                vec2.add(pos1, circleCollider.position, pos1);
-                
-                // Calculate time left.
-                t = -t; 
-                
-                collisions.push({                
-                    obj1: {
-                        collider: circleCollider,
-                        parent: circleCollider.parent,
-                        position: pos1, 
-                        normal: vec2.fromValues(0, -1),
-                        velocity: vec2.clone(circleCollider.velocity), 
-                        timeLeft: t,
-                        radius: circleCollider.radius,
-                    },
-                    obj2: {
-                        collider: bbCollider,
-                        parent: bbCollider.parent,
-                        plane: vec2.fromValues(0, points[1][1]),
-                    }   
-                });
-            }
-            // Then left X plane.
-            if((points[0][0] - circleCollider.position[0]) > 0)
-            {
-                // Calculate how long ago the collision took place.
-                let t = (Math.abs(circleCollider.position[0] - points[0][0]) 
-                            - Number.EPSILON) / Math.abs(circleCollider.velocity[0]);
+                        // Calculate displacement by t (should be negative time)
+                        // to get position at time of collision.
+                        vec2.scale(pos1, circleCollider.velocity, t);
+                        vec2.add(pos1, circleCollider.position, pos1);
 
-                // Negate t.
-                t = -t;
+                        
+                        
+                        // Calculate time left.
+                        t = -t;
+                        if (t == Number.POSITIVE_INFINITY || t == Number.NEGATIVE_INFINITY) {
+                            throw "Bad timeLeft"
+                        }
+                    }
+                
+                    // Make sure the position is always inside.
+                    pos1[axis] = pI 
+                        ? Math.min(pos1[axis], points[pI][axis])
+                        : Math.max(pos1[axis], points[pI][axis]);
 
-                const pos1 = vec2.create();
-                // Calculate displacement by t (should be negative time)
-                // to get position at time of collision.
-                vec2.scale(pos1, circleCollider.velocity, t);
-                vec2.add(pos1, circleCollider.position, pos1);
-                
-                // Calculate time left.
-                t = -t; 
-                
-                collisions.push({                
-                    obj1: {
-                        collider: circleCollider,
-                        parent: circleCollider.parent,
-                        position: pos1, 
-                        normal: vec2.fromValues(1, 0),
-                        velocity: vec2.clone(circleCollider.velocity), 
-                        timeLeft: t,
-                        radius: circleCollider.radius,
-                    },
-                    obj2: {
-                        collider: bbCollider,
-                        parent: bbCollider.parent,
-                        plane: vec2.fromValues(points[0][0], 0),
-                    }   
-                });
-            }
-            // Then right X plane.
-            if((points[1][0] - circleCollider.position[0]) < 0)
-            {
-                // Calculate how long ago the collision took place.
-                let t = (Math.abs(circleCollider.position[0] - points[1][0]) 
-                            - Number.EPSILON) / Math.abs(circleCollider.velocity[0]);
+                    collisions.push({                
+                        obj1: {
+                            collider: circleCollider,
+                            parent: circleCollider.parent,
+                            position: pos1, 
+                            normal: vec2.fromValues((1 - axis) * (1 - pI * 2), axis * (1 - pI * 2)),
+                            velocity: vec2.clone(circleCollider.velocity), 
+                            timeLeft: t,
+                            radius: circleCollider.radius,
+                        },
+                        obj2: {
+                            collider: bbCollider,
+                            parent: bbCollider.parent,
+                            plane: vec2.fromValues((1 - axis) * points[pI][axis], axis * points[pI][axis]),
+                        }  
+                    }); 
+                }
+            });
 
-                // Negate t.
-                t = -t;
+            // // Check if we hit the bottom Y plane.
+            // if((points[1][1] - circleCollider.position[1]) < 0)
+            // {
+            //     // Calculate how long ago the collision took place.
+            //     let t = (Math.abs(circleCollider.position[1] - points[1][1]) 
+            //                 - Number.EPSILON) / Math.abs(circleCollider.velocity[1]);
 
-                const pos1 = vec2.create();
-                // Calculate displacement by t (should be negative time)
-                // to get position at time of collision.
-                vec2.scale(pos1, circleCollider.velocity, t);
-                vec2.add(pos1, circleCollider.position, pos1);
-                
-                // Calculate time left.
-                t = -t; 
-                
-                collisions.push({                
-                    obj1: {
-                        collider: circleCollider,
-                        parent: circleCollider.parent,
-                        position: pos1, 
-                        normal: vec2.fromValues(-1, 0),
-                        velocity: vec2.clone(circleCollider.velocity), 
-                        timeLeft: t,
-                        radius: circleCollider.radius,
-                    },
-                    obj2: {
-                        collider: bbCollider,
-                        parent: bbCollider.parent,
-                        plane: vec2.fromValues(points[1][0], 0),
-                    }   
-                });
-            }
-            // Then top Y plane.
-            if((points[0][1] - circleCollider.position[1]) > 0)
-            {
-                // Calculate how long ago the collision took place.
-                let t = (Math.abs(circleCollider.position[1] - points[0][1]) 
-                            - Number.EPSILON) / Math.abs(circleCollider.velocity[1]);
+            //     // Negate t.
+            //     t = -t;
 
-                // Negate t.
-                t = -t;
+            //     const pos1 = vec2.create();
+            //     // Calculate displacement by t (should be negative time)
+            //     // to get position at time of collision.
+            //     vec2.scale(pos1, circleCollider.velocity, t);
+            //     vec2.add(pos1, circleCollider.position, pos1);
 
-                const pos1 = vec2.create();
-                // Calculate displacement by t (should be negative time)
-                // to get position at time of collision.
-                vec2.scale(pos1, circleCollider.velocity, t);
-                vec2.add(pos1, circleCollider.position, pos1);
+            //     // Make sure the position is always outside.
+            //     pos1[1] = Math.min(pos1[1], points[1][1])
                 
-                // Calculate time left.
-                t = -t; 
+            //     // Calculate time left.
+            //     t = -t;
                 
-                collisions.push({                
-                    obj1: {
-                        collider: circleCollider,
-                        parent: circleCollider.parent,
-                        position: pos1, 
-                        normal: vec2.fromValues(0, 1),
-                        velocity: vec2.clone(circleCollider.velocity), 
-                        timeLeft: t,
-                        radius: circleCollider.radius,
-                    },
-                    obj2: {
-                        collider: bbCollider,
-                        parent: bbCollider.parent,
-                        plane: vec2.fromValues(0, points[0][1]),
-                    }   
-                });
-            }
+            //     collisions.push({                
+            //         obj1: {
+            //             collider: circleCollider,
+            //             parent: circleCollider.parent,
+            //             position: pos1, 
+            //             normal: vec2.fromValues(0, -1),
+            //             velocity: vec2.clone(circleCollider.velocity), 
+            //             timeLeft: t,
+            //             radius: circleCollider.radius,
+            //         },
+            //         obj2: {
+            //             collider: bbCollider,
+            //             parent: bbCollider.parent,
+            //             plane: vec2.fromValues(0, points[1][1]),
+            //         }   
+            //     });
+            // }
+            // // Then left X plane.
+            // if((points[0][0] - circleCollider.position[0]) > 0)
+            // {
+            //     // Calculate how long ago the collision took place.
+            //     let t = (Math.abs(circleCollider.position[0] - points[0][0]) 
+            //                 - Number.EPSILON) / Math.abs(circleCollider.velocity[0]);
+
+            //     // Negate t.
+            //     t = -t;
+
+            //     const pos1 = vec2.create();
+            //     // Calculate displacement by t (should be negative time)
+            //     // to get position at time of collision.
+            //     vec2.scale(pos1, circleCollider.velocity, t);
+            //     vec2.add(pos1, circleCollider.position, pos1);
+                
+            //     // Make sure the position is always outside.
+            //     pos1[0] = Math.max(pos1[0], points[0][0])
+
+            //     // Calculate time left.
+            //     t = -t; 
+                
+            //     collisions.push({                
+            //         obj1: {
+            //             collider: circleCollider,
+            //             parent: circleCollider.parent,
+            //             position: pos1, 
+            //             normal: vec2.fromValues(1, 0),
+            //             velocity: vec2.clone(circleCollider.velocity), 
+            //             timeLeft: t,
+            //             radius: circleCollider.radius,
+            //         },
+            //         obj2: {
+            //             collider: bbCollider,
+            //             parent: bbCollider.parent,
+            //             plane: vec2.fromValues(points[0][0], 0),
+            //         }   
+            //     });
+            // }
+            // // Then right X plane.
+            // if((points[1][0] - circleCollider.position[0]) < 0)
+            // {
+            //     // Calculate how long ago the collision took place.
+            //     let t = (Math.abs(circleCollider.position[0] - points[1][0]) 
+            //                 - Number.EPSILON) / Math.abs(circleCollider.velocity[0]);
+
+            //     // Negate t.
+            //     t = -t;
+
+            //     const pos1 = vec2.create();
+            //     // Calculate displacement by t (should be negative time)
+            //     // to get position at time of collision.
+            //     vec2.scale(pos1, circleCollider.velocity, t);
+            //     vec2.add(pos1, circleCollider.position, pos1);
+                
+            //     // Make sure the position is always outside.
+            //     pos1[0] = Math.min(pos1[0], points[1][0])
+
+            //     // Calculate time left.
+            //     t = -t; 
+                
+            //     collisions.push({                
+            //         obj1: {
+            //             collider: circleCollider,
+            //             parent: circleCollider.parent,
+            //             position: pos1, 
+            //             normal: vec2.fromValues(-1, 0),
+            //             velocity: vec2.clone(circleCollider.velocity), 
+            //             timeLeft: t,
+            //             radius: circleCollider.radius,
+            //         },
+            //         obj2: {
+            //             collider: bbCollider,
+            //             parent: bbCollider.parent,
+            //             plane: vec2.fromValues(points[1][0], 0),
+            //         }   
+            //     });
+            // }
+            // // Then top Y plane.
+            // if((points[0][1] - circleCollider.position[1]) > 0)
+            // {
+            //     // Calculate how long ago the collision took place.
+            //     let t = (Math.abs(circleCollider.position[1] - points[0][1]) 
+            //                 - Number.EPSILON) / Math.abs(circleCollider.velocity[1]);
+
+            //     // Negate t.
+            //     t = -t;
+
+            //     const pos1 = vec2.create();
+            //     // Calculate displacement by t (should be negative time)
+            //     // to get position at time of collision.
+            //     vec2.scale(pos1, circleCollider.velocity, t);
+            //     vec2.add(pos1, circleCollider.position, pos1);
+                
+            //     // Make sure the position is always outside.
+            //     pos1[1] = Math.max(pos1[1], points[0][1])
+
+            //     // Calculate time left.
+            //     t = -t; 
+                
+            //     collisions.push({                
+            //         obj1: {
+            //             collider: circleCollider,
+            //             parent: circleCollider.parent,
+            //             position: pos1, 
+            //             normal: vec2.fromValues(0, 1),
+            //             velocity: vec2.clone(circleCollider.velocity), 
+            //             timeLeft: t,
+            //             radius: circleCollider.radius,
+            //         },
+            //         obj2: {
+            //             collider: bbCollider,
+            //             parent: bbCollider.parent,
+            //             plane: vec2.fromValues(0, points[0][1]),
+            //         }   
+            //     });
+            // }
 
             return collisions;
         }
