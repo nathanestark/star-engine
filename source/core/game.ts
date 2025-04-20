@@ -2,6 +2,8 @@ import { RefreshTime } from "./types";
 import GameObject from "./game-object";
 import InputController from "./input-controller";
 import Camera from "./camera";
+import { EventEmitter } from "events";
+import { off } from "process";
 
 class GameRoot extends GameObject {
     constructor(game: Game) {
@@ -12,12 +14,34 @@ class GameRoot extends GameObject {
     }
 }
 
+export interface GameProperties {
+    paused?: boolean;
+    timeScale?: number;
+    minUpdateTime?: number;
+    onGameObjectAdded?: (obj: GameObject) => void;
+    onGameObjectRemoved?: (obj: GameObject) => void;
+    onGameObjectMoved?: (obj: GameObject, oldParent: GameObject, newParent: GameObject) => void;
+    gameLoopStep?: {
+        request: (callback: () => void) => number;
+        cancel: (loopId: number) => void;
+    };
+    idRange?: {
+        min: number;
+        max: number;
+    };
+}
+
 export default class Game {
     debug: boolean;
+    _idRange: {
+        min: number;
+        max: number;
+    };
     _curId: number;
     _running: boolean;
     _paused: boolean;
     _curFrame: number;
+    _lastUpdateTime: number;
     _timeScale: number;
     _minUpdateTime: number;
     _inputControllers: Array<InputController>;
@@ -46,27 +70,20 @@ export default class Game {
             reject: (reason?: any) => void;
         }
     >;
-    _onGameObjectAdded: (obj: GameObject) => void;
-    _onGameObjectRemoved: (obj: GameObject) => void;
-    _onGameObjectMoved: (obj: GameObject, oldParent: GameObject, newParent: GameObject) => void;
 
-    constructor(
-        properties: {
-            paused?: boolean;
-            timeScale?: number;
-            minUpdateTime?: number;
-            onGameObjectAdded?: (obj: GameObject) => void;
-            onGameObjectRemoved?: (obj: GameObject) => void;
-            onGameObjectMoved?: (
-                obj: GameObject,
-                oldParent: GameObject,
-                newParent: GameObject
-            ) => void;
-        } = {}
-    ) {
+    _requestGameLoopStep: (callback: () => void) => number;
+    _cancelGameLoopStep: (loopId: number) => void;
+
+    _emitter: EventEmitter;
+
+    constructor(properties: GameProperties = {}) {
         this.debug = false;
 
         /* Set up some 'private' variables. */
+        this._idRange = {
+            min: 0,
+            max: Number.MAX_SAFE_INTEGER
+        };
         this._curId = 0;
         this._running = false;
         this._paused = false;
@@ -88,6 +105,12 @@ export default class Game {
         this._removingList = new Map(); // Only allow an object to be removed once, so a map.
         this._moveList = new Map(); // Only allow an object to be moved once, so a map.
 
+        if (properties.idRange) {
+            this._idRange = { min: properties.idRange.min, max: properties.idRange.max };
+            // and update our initial id
+            this._curId = this._idRange.min;
+        }
+
         if (typeof properties.paused === "boolean") this._paused = properties.paused;
 
         if (typeof properties.timeScale === "number") this._timeScale = properties.timeScale;
@@ -95,39 +118,41 @@ export default class Game {
         if (typeof properties.minUpdateTime === "number")
             this._minUpdateTime = properties.minUpdateTime;
 
-        if (properties.onGameObjectAdded) this._onGameObjectAdded = properties.onGameObjectAdded;
+        if (properties.gameLoopStep) {
+            this._requestGameLoopStep = properties.gameLoopStep.request;
+            this._cancelGameLoopStep = properties.gameLoopStep.cancel;
+        } else {
+            let requestStep = globalThis.requestAnimationFrame;
+            let cancelStep = globalThis.cancelAnimationFrame;
 
-        if (properties.onGameObjectRemoved)
-            this._onGameObjectRemoved = properties.onGameObjectRemoved;
+            // Ensure requestAnationFrame and cancelAnimationFrame exists properly.
+            let lastTime = 0;
+            const vendors = ["webkit", "moz"];
+            for (let x = 0; x < vendors.length && !this._requestGameLoopStep; ++x) {
+                const gt = globalThis as Record<string, any>;
+                requestStep = gt[`${vendors[x]}RequestAnimationFrame`];
+                cancelStep =
+                    gt[`${vendors[x]}CancelAnimationFrame`] ||
+                    gt[`${vendors[x]}CancelRequestAnimationFrame`];
+            }
 
-        if (properties.onGameObjectMoved) this._onGameObjectMoved = properties.onGameObjectMoved;
+            if (!requestStep) {
+                requestStep = (callback: FrameRequestCallback) => {
+                    const curTime = new Date().getTime();
+                    const timeToCall = Math.max(0, this._minUpdateTime - (curTime - lastTime));
+                    const id = +setTimeout(function () {
+                        callback(curTime + timeToCall);
+                    }, timeToCall);
+                    lastTime = curTime + timeToCall;
+                    return id;
+                };
 
-        // Ensure requestAnationFrame and cancelAnimationFrame exists properly.
-        let lastTime = 0;
-        const vendors = ["webkit", "moz"];
-        for (let x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-            const win = window as Record<string, any>;
-            window.requestAnimationFrame = win[`${vendors[x]}RequestAnimationFrame`];
-            window.cancelAnimationFrame =
-                win[`${vendors[x]}CancelAnimationFrame`] ||
-                win[`${vendors[x]}CancelRequestAnimationFrame`];
+                cancelStep = (id) => clearTimeout(id);
+            }
+            this._requestGameLoopStep = (callback) => requestStep(callback);
+            this._cancelGameLoopStep = (id) => cancelStep(id);
         }
-
-        if (!window.requestAnimationFrame)
-            window.requestAnimationFrame = function (callback: FrameRequestCallback) {
-                const curTime = new Date().getTime();
-                const timeToCall = Math.max(0, this._minUpdateTime - (curTime - lastTime));
-                const id = window.setTimeout(function () {
-                    callback(curTime + timeToCall);
-                }, timeToCall);
-                lastTime = curTime + timeToCall;
-                return id;
-            }.bind(this);
-
-        if (!window.cancelAnimationFrame)
-            window.cancelAnimationFrame = function (id) {
-                clearTimeout(id);
-            };
+        this._emitter = new EventEmitter();
     }
 
     /* Public Functions */
@@ -441,14 +466,24 @@ export default class Game {
         return this._timeScale;
     }
 
-    // eslint-disable-next-line no-unused-vars
-    onGameObjectAdded(obj: GameObject) {}
-
-    // eslint-disable-next-line no-unused-vars
-    onGameObjectRemoved(obj: GameObject) {}
-
-    // eslint-disable-next-line no-unused-vars
-    onGameObjectMoved(obj: GameObject, oldParent: GameObject, newParent: GameObject) {}
+    on(
+        event: "gameObjectAdded" | "gameObjectRemoved" | "gameObjectRemoved",
+        listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
+    ) {
+        this._emitter.on(event, listener);
+    }
+    off(
+        event: "gameObjectAdded" | "gameObjectRemoved" | "gameObjectRemoved",
+        listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
+    ) {
+        this._emitter.off(event, listener);
+    }
+    once(
+        event: "gameObjectAdded" | "gameObjectRemoved" | "gameObjectRemoved",
+        listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
+    ) {
+        this._emitter.once(event, listener);
+    }
 
     addInputController(controller: InputController) {
         this._inputControllers.push(controller);
@@ -488,14 +523,15 @@ export default class Game {
             const newObj = cur.obj;
             const newParent = cur.parent;
 
-            let id = null;
-            let startId = null;
-            // Generate the next available Id.
-            {
+            // if we don't have an id, generate one for us.
+            if (!newObj.id) {
+                let id = null;
+                let startId = null;
+                // Generate the next available Id.
                 // Verify it is available
                 while (id == null || typeof this._gameObjects[id] !== "undefined") {
                     // Increment (with overflow looping)
-                    if (this._curId == Number.MAX_VALUE) this._curId == Number.MIN_VALUE;
+                    if (this._curId == this._idRange.max) this._curId == this._idRange.min;
                     else this._curId = this._curId + 1;
                     id = this._curId;
                     if (startId == null) startId = id;
@@ -504,8 +540,8 @@ export default class Game {
                         reject("No unused ids left to assign.");
                     }
                 }
+                newObj.id = id;
             }
-            newObj.id = id;
             newObj._game = this;
 
             // Add to the _gameObjects.
@@ -540,10 +576,12 @@ export default class Game {
             }
         }
 
-        for (let x = 0; x < added.length; x++) {
-            this.onGameObjectAdded(added[x]);
-            if (this._onGameObjectAdded) this._onGameObjectAdded(added[x]);
-        }
+        added.forEach((added) => {
+            if (added.gameObjectAdded) added.gameObjectAdded();
+        });
+
+        added.forEach((added) => this._emitter.emit("gameObjectAdded", added));
+
         resolve(obj);
     }
 
@@ -579,7 +617,18 @@ export default class Game {
 
                 // Remove tags.
                 if (obj.tags && obj.tags.length > 0) {
-                    this.removeTags(obj.id, ...obj.tags);
+                    obj.tags.forEach((tag) => {
+                        // Remove from the tag map.
+                        if (this._tagMap[tag]) {
+                            let index = this._tagMap[tag].indexOf(obj.id);
+                            if (index >= 0) {
+                                this._tagMap[tag].splice(index, 1);
+                            }
+
+                            // Remove this tag completely if no one has it.
+                            if (this._tagMap[tag].length == 0) delete this._tagMap[tag];
+                        }
+                    });
                 }
 
                 // Remove from parent's children collection
@@ -605,10 +654,11 @@ export default class Game {
             }
         }
 
-        for (let x = 0; x < removed.length; x++) {
-            this.onGameObjectRemoved(removed[x]);
-            if (this._onGameObjectRemoved) this._onGameObjectRemoved(removed[x]);
-        }
+        removed.forEach((removed) => this._emitter.emit("gameObjectRemoved", removed));
+
+        removed.forEach((removed) => {
+            if (removed.gameObjectRemoved) removed.gameObjectRemoved();
+        });
         resolve(obj);
     }
 
@@ -652,8 +702,9 @@ export default class Game {
         // Update parent reference.
         obj._parent = parentId;
 
-        this.onGameObjectMoved(obj, oldParent, newParent);
-        if (this._onGameObjectMoved) this._onGameObjectMoved(obj, oldParent, newParent);
+        if (obj.gameObjectMoved) obj.gameObjectMoved(oldParent, newParent);
+
+        this._emitter.emit("gameObjectAdded", obj, oldParent, newParent);
 
         resolve(obj);
     }
@@ -663,18 +714,17 @@ export default class Game {
 
         // Begin our loop.
         let gameLoop: () => void;
-        let lastTime: number;
         let updateTime = 0;
         let animationTime = 0;
         gameLoop = () => {
             if (!this._running) return;
 
-            if (lastTime == null) lastTime = Date.now();
+            if (this._lastUpdateTime == null) this._lastUpdateTime = Date.now();
 
             const curTime = Date.now();
 
-            const elapsed = curTime - lastTime;
-            lastTime = curTime;
+            const elapsed = curTime - this._lastUpdateTime;
+            this._lastUpdateTime = curTime;
 
             // Process user input.
             this._processInput();
@@ -704,22 +754,22 @@ export default class Game {
                 timeScale: this._timeScale,
                 animationTime: animationTime,
                 curTime: curTime,
-                lastTime: lastTime
+                lastTime: this._lastUpdateTime
             });
 
             // Loop again.
-            this._curFrame = window.requestAnimationFrame(gameLoop);
+            this._curFrame = this._requestGameLoopStep(gameLoop);
         };
 
         this._running = true;
-        this._curFrame = window.requestAnimationFrame(gameLoop);
+        this._curFrame = this._requestGameLoopStep(gameLoop);
     }
 
     _stop() {
         if (!this._running) return;
 
         this._running = false;
-        if (this._curFrame != null) window.cancelAnimationFrame(this._curFrame);
+        if (this._curFrame != null) this._cancelGameLoopStep(this._curFrame);
     }
 
     _processInput() {

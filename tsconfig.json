@@ -1,10 +1,16 @@
 {
     "compilerOptions": {
-        "outDir": "./dist/",
+        "outDir": "./dist",
+        "rootDir": "./source",
+        "baseUrl": "./",
         "allowJs": true,
         "noImplicitAny": true,
+        "module": "CommonJS",
         "target": "es2024", // "es6",
         "moduleResolution": "node",
+        "lib": ["ES2024", "DOM"],
+        "sourceMap": true,
+        "declaration": true,
         "paths": {
             "source/*": ["./source/*"]
         }

@@ -256,7 +256,7 @@ export default class Asteroids extends Game {
                             clipPosition: vec2.fromValues(0, 50),
                             frameSpacing: vec2.fromValues(0, 50),
                             frames: 9,
-                            repeatMethod: "bounce"
+                            repeatMethod: "loop"
                         }
                     }
                 },

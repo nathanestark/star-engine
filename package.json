@@ -2,10 +2,12 @@
     "name": "star-engine",
     "version": "0.0.1",
     "description": "star-engine",
-    "main": "index.js",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
         "start:dev": "cross-env NODE_ENV=development webpack-dev-server",
         "build": "cross-env NODE_ENV=production webpack",
+        "build:lib": "cross-env NODE_ENV=production tsup source/index.ts --format cjs --out-dir dist --dts",
         "lint": "eslint ."
     },
     "devDependencies": {
@@ -23,6 +25,7 @@
         "prettier": "3.5.3",
         "source-map-loader": "^5.0.0",
         "ts-loader": "^9.5.2",
+        "tsup": "^8.4.0",
         "typescript": "^5.8.3",
         "webpack": "^5.98.0",
         "webpack-cli": "^6.0.1",

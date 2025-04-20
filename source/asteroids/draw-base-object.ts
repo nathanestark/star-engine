@@ -28,7 +28,6 @@ interface RenderableImageWithAnimation extends RenderableImage {
 interface RenderImage extends RenderableImage {
     animations?: Record<string, RenderAnimation>;
     defaultAnimation?: string;
-    animationDir: number;
     curAnimation?: RenderAnimation;
     animationStartTime?: number;
     offsetPosition: vec2;
@@ -96,8 +95,7 @@ export default class DrawBaseObject extends GameObject {
             offsetPosition: vec2.create(),
             offsetSize: vec2.create(),
             clipSize: vec2.create(),
-            clipPosition: vec2.create(),
-            animationDir: 1
+            clipPosition: vec2.create()
         };
 
         if (rImgDef.image) ret.image = rImgDef.image;
@@ -158,12 +156,8 @@ export default class DrawBaseObject extends GameObject {
                 } else if (newAnimation.repeatMethod == "bounce") {
                     // Or bounce front to back to front to back
                     newAnimation.getFrame = (animFrame: number) => {
-                        const reversals = Math.floor(animFrame / (newAnimation.frames.length - 1));
-                        const left = animFrame - reversals * (newAnimation.frames.length - 1);
-
-                        ret.animationDir *= Math.pow(-1, reversals);
-                        if (ret.animationDir == 1) return left;
-                        else return newAnimation.frames.length - 1 - left;
+                        const length = newAnimation.frames.length - 1;
+                        return length - Math.abs((animFrame % (length * 2)) - length);
                     };
                 }
 
@@ -220,24 +214,24 @@ export default class DrawBaseObject extends GameObject {
         camera.context.save();
 
         const diam = this.radius * 2;
-        const ratioX = diam / this.image.offsetSize[0];
-        const ratioY = diam / this.image.offsetSize[1];
+        const ratioX = diam / image.offsetSize[0];
+        const ratioY = diam / image.offsetSize[1];
         camera.context.rotate(image.rotation);
         camera.context.translate(
-            -(this.radius + this.image.offsetPosition[0] * ratioX),
-            -(this.radius + this.image.offsetPosition[1] * ratioY)
+            -(this.radius + image.offsetPosition[0] * ratioX),
+            -(this.radius + image.offsetPosition[1] * ratioY)
         );
 
         camera.context.drawImage(
-            this.image.image,
+            image.image,
             image.clipPosition[0],
             image.clipPosition[1],
             image.clipSize[0],
             image.clipSize[1],
             0,
             0,
-            this.image.clipSize[0] * ratioX,
-            this.image.clipSize[1] * ratioY
+            image.clipSize[0] * ratioX,
+            image.clipSize[1] * ratioY
         );
 
         camera.context.restore();

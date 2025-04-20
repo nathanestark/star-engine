@@ -30,8 +30,6 @@ export interface BoundingBoxColliderResult {
     plane: vec2;
 }
 
-export interface Results {}
-
 export function testCircleOnCircleCollisons(
     collider1: CircleCollider,
     collider2: CircleCollider

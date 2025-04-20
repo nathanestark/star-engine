@@ -36,15 +36,15 @@ export default class InputController {
     }
 
     // Register an input device
-    registerDevice(
+    registerDevice<T extends Event>(
         deviceName: string,
-        registerCall: (triggerCall: (event: Event) => void) => void,
-        triggerCall: (event: Event) => TriggerCallEvent
+        registerCall: (triggerCall: (event: T) => void) => void,
+        triggerCall: (event: T) => TriggerCallEvent
     ) {
         if (this.devices.has(deviceName))
             throw "Device '" + deviceName + "' is already registered.";
 
-        const tCall = (event: Event) => {
+        const tCall = (event: T) => {
             const tcEvent = triggerCall(event);
 
             // Set value, or remove value.

@@ -24,6 +24,10 @@ export default class GameObject {
 
     childrenSort?(camera: Camera, childObjects: Array<GameObject>): Array<GameObject>;
 
+    gameObjectAdded?(): void;
+    gameObjectRemoved?(): void;
+    gameObjectMoved?(oldParent: GameObject, newParent: GameObject): void;
+
     constructor() {}
 
     get active() {
