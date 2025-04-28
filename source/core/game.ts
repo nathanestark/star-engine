@@ -453,6 +453,11 @@ export default class Game {
         if (this._moveList.has(id))
             throw "The specified object is scheduled for being moved and cannot be removed.";
 
+        // Children first.
+        (obj._children || []).forEach((child) => {
+            if (this.getGameObject(child)?.active) this.removeGameObject(child);
+        });
+
         return await new Promise((resolve, reject) => {
             this._removingList.set(id, { obj: obj, resolve: resolve, reject: reject });
         });
@@ -467,19 +472,19 @@ export default class Game {
     }
 
     on(
-        event: "gameObjectAdded" | "gameObjectRemoved" | "gameObjectRemoved",
+        event: "gameObjectAdded" | "gameObjectRemoved",
         listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
     ) {
         this._emitter.on(event, listener);
     }
     off(
-        event: "gameObjectAdded" | "gameObjectRemoved" | "gameObjectRemoved",
+        event: "gameObjectAdded" | "gameObjectRemoved",
         listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
     ) {
         this._emitter.off(event, listener);
     }
     once(
-        event: "gameObjectAdded" | "gameObjectRemoved" | "gameObjectRemoved",
+        event: "gameObjectAdded" | "gameObjectRemoved",
         listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
     ) {
         this._emitter.once(event, listener);

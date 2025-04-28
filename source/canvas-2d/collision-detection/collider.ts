@@ -115,7 +115,7 @@ export default class Collider<T_owner extends Collidable>
         // If we're not static, let the owner know about the collisions.
         if (!this.static) {
             for (let i = 0; i < collisions.length; i++) {
-                if (this.owner.onCollided)
+                if (this.owner.onCollided && !collisions[i].obj1.canceled)
                     this.owner.onCollided(collisions[i].obj1, collisions[i].obj2);
             }
         }
