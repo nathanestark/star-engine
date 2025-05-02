@@ -10,6 +10,7 @@ export interface ColliderProperties {
     name?: string;
     color?: string;
     position?: vec2;
+    canCollide?: boolean;
 }
 
 export interface Collidable extends GameObject2D {
@@ -19,6 +20,7 @@ export interface Collidable extends GameObject2D {
 }
 
 export interface ICollider {
+    canCollide: boolean;
     colliderTestMap: Record<string, (collider: ICollider) => Array<CollisionResult>>;
     testInsideBoundingBox(_bounds: [vec2, vec2]): 0 | 1 | 2;
     testCollision(collider: ICollider, _tDelta: number): null | Array<CollisionResult>;
@@ -36,10 +38,11 @@ export default class Collider<T_owner extends Collidable>
     position: vec2;
     velocity: vec2;
     totalForce: vec2;
+    canCollide: boolean;
 
     colliderTestMap: Record<string, (collider: ICollider) => Array<CollisionResult>> = {};
 
-    constructor(owner: T_owner, { name, color, position }: ColliderProperties = {}) {
+    constructor(owner: T_owner, { name, color, position, canCollide }: ColliderProperties = {}) {
         super();
 
         this.owner = owner;
@@ -55,6 +58,11 @@ export default class Collider<T_owner extends Collidable>
             this.position = position;
         } else {
             this.position = vec2.create();
+        }
+        if (typeof canCollide !== "undefined") {
+            this.canCollide = canCollide;
+        } else {
+            this.canCollide = true;
         }
 
         this.velocity = vec2.create();

@@ -32,7 +32,7 @@ export default class CollisionDetection extends GameObject {
         const quadTree = (this.quadTree = new QuadTree(this._maxBounds, 1));
 
         for (let i = 0; i < objs.length; i++) {
-            quadTree.insert(objs[i]);
+            if (objs[i].canCollide) quadTree.insert(objs[i]);
         }
 
         // Test each collider against each other.
