@@ -13,7 +13,10 @@ export {
     CONTROLLER_ACTION,
     CONTROLLER_VALUE,
     Resources,
-    Resource
+    Resource,
+    SeededRNG,
+    rgbToHsl,
+    hslToRgb
 } from "./core";
 export {
     GameObject2D,

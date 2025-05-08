@@ -12,6 +12,8 @@ import InputController, {
     CONTROLLER_VALUE
 } from "./input-controller";
 import Resources, { Resource } from "./resources";
+import SeededRNG from "./seeded-rng";
+import { rgbToHsl, hslToRgb } from "./color";
 
 export {
     Game,
@@ -28,5 +30,8 @@ export {
     CONTROLLER_ACTION,
     CONTROLLER_VALUE,
     Resources,
-    Resource
+    Resource,
+    SeededRNG,
+    rgbToHsl,
+    hslToRgb
 };
