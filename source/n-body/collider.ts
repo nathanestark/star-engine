@@ -1,5 +1,6 @@
 import { vec3 } from "gl-matrix";
 import GameObject from "source/core/game-object";
+import { RefreshTime } from "source/core";
 import Body from "./body";
 
 export interface ColliderProperties {
@@ -16,7 +17,7 @@ export default class Collider extends GameObject {
         if (typeof rocheLimitOn === "boolean") this.rocheLimitOn = rocheLimitOn;
     }
 
-    update(tDelta: number) {
+    update(time: RefreshTime) {
         // Grab all world objects that have radius.
         const objs = this.game.filter("body").filter(function (obj) {
             return (obj as Body).radius > 0;
@@ -61,8 +62,8 @@ export default class Collider extends GameObject {
                             collisionTime = (-b - Math.sqrt(d)) / a;
                             // If t is greater than tDelta, then we won't collide in this interval.
                             // If it is less than 2xtDelta, then we will next time...
-                            if (collisionTime > tDelta) {
-                                if (collisionTime <= tDelta * 2) {
+                            if (collisionTime > time.timeAdvance) {
+                                if (collisionTime <= time.timeAdvance * 2) {
                                     collisionTime = 0; // Count it as now.
                                 }
                                 collisionTime = -1;

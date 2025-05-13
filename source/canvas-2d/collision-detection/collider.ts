@@ -76,7 +76,7 @@ export default class Collider<T_owner extends Collidable>
         return false;
     }
 
-    update(_tDelta: number) {
+    update(_time: RefreshTime) {
         if (!this.static) {
             this.position = this.owner.position;
             this.velocity = this.owner.velocity;

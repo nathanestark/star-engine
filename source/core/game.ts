@@ -142,7 +142,7 @@ export default class Game {
                     const timeToCall = Math.max(0, this._minUpdateTime - (curTime - lastTime));
                     const id = +setTimeout(function () {
                         callback(curTime + timeToCall);
-                    }, timeToCall);
+                    }, timeToCall); // +setTimeout forces it to a number.
                     lastTime = curTime + timeToCall;
                     return id;
                 };
@@ -649,6 +649,7 @@ export default class Game {
                 delete this._gameObjects[obj.id];
 
                 delete obj._game;
+                obj._removed = true;
 
                 removed.push(obj);
             } else {
@@ -728,6 +729,7 @@ export default class Game {
 
             const curTime = Date.now();
 
+            const lastUpdateTime = this._lastUpdateTime;
             const elapsed = curTime - this._lastUpdateTime;
             this._lastUpdateTime = curTime;
 
@@ -748,7 +750,13 @@ export default class Game {
 
                 while (updateTime >= this._minUpdateTime) {
                     // Update the world
-                    this._update(tDelta);
+                    this._update({
+                        timeAdvance: tDelta,
+                        timeScale: this._timeScale,
+                        animationTime: animationTime,
+                        curTime: curTime,
+                        lastTime: lastUpdateTime
+                    });
                     updateTime -= this._minUpdateTime;
                 }
             }
@@ -759,7 +767,7 @@ export default class Game {
                 timeScale: this._timeScale,
                 animationTime: animationTime,
                 curTime: curTime,
-                lastTime: this._lastUpdateTime
+                lastTime: lastUpdateTime
             });
 
             // Loop again.
@@ -784,11 +792,11 @@ export default class Game {
         }
     }
 
-    _update(tDelta: number) {
+    _update(time: RefreshTime) {
         this.traverse(this._gameTree, (obj) => {
             // Now execute the update of the object (if it wants to be).
             if (obj.update) {
-                obj.update(tDelta);
+                obj.update(time);
             }
 
             // If the object has the 'avoidChildrenUpdate' flag, then we

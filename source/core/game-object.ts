@@ -6,6 +6,7 @@ export default class GameObject {
     _id?: number;
 
     _game: Game;
+    _removed: boolean = false;
     _initialParent?: GameObject;
     _initialChildren?: Array<GameObject>;
     _parent?: number;
@@ -18,7 +19,7 @@ export default class GameObject {
     avoidChildrenUpdate?: boolean;
     avoidChildrenDrawing?: boolean;
 
-    update?(tDelta: number): void;
+    update?(time: RefreshTime): void;
     draw?(camera: Camera, time: RefreshTime): void;
     debugDraw?(camera: Camera, time: RefreshTime): void;
 
@@ -73,7 +74,7 @@ export default class GameObject {
     }
 
     get tags(): Array<string> {
-        if (!this.active) return this._initialTags;
+        if (!this.active && !this._removed) return this._initialTags;
 
         return this._tags;
     }
