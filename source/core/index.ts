@@ -1,4 +1,4 @@
-import Game, { GameProperties } from "./game";
+import Game, { GameProperties, GameEventEmitter, GameEventMap, GameEventTypes } from "./game";
 import GameObject from "./game-object";
 import Container from "./container";
 import Camera from "./camera";
@@ -18,6 +18,9 @@ import { rgbToHsl, hslToRgb } from "./color";
 export {
     Game,
     GameProperties,
+    GameEventEmitter,
+    GameEventMap,
+    GameEventTypes,
     GameObject,
     Container,
     Camera,

@@ -14,6 +14,36 @@ class GameRoot extends GameObject {
     }
 }
 
+export type GameEventMap = Record<string, any[]>;
+
+export class GameEventEmitter<E extends GameEventMap> {
+    private readonly emitter = new EventEmitter();
+
+    on<K extends keyof E>(event: K, listener: (...args: E[K]) => void): this {
+        this.emitter.on(event as string, listener);
+        return this;
+    }
+
+    once<K extends keyof E>(event: K, listener: (...args: E[K]) => void): this {
+        this.emitter.once(event as string, listener);
+        return this;
+    }
+
+    off<K extends keyof E>(event: K, listener: (...args: E[K]) => void): this {
+        this.emitter.off(event as string, listener);
+        return this;
+    }
+
+    emit<K extends keyof E>(event: K, ...args: E[K]): boolean {
+        return this.emitter.emit(event as string, ...args);
+    }
+}
+
+export interface GameEventTypes extends GameEventMap {
+    gameObjectAdded: [obj: GameObject, oldParent?: GameObject, newParent?: GameObject];
+    gameObjectRemoved: [obj: GameObject, oldParent?: GameObject];
+}
+
 export interface GameProperties {
     paused?: boolean;
     timeScale?: number;
@@ -31,7 +61,7 @@ export interface GameProperties {
     };
 }
 
-export default class Game {
+export default class Game extends GameEventEmitter<GameEventTypes> {
     debug: boolean;
     _idRange: {
         min: number;
@@ -74,9 +104,8 @@ export default class Game {
     _requestGameLoopStep: (callback: () => void) => number;
     _cancelGameLoopStep: (loopId: number) => void;
 
-    _emitter: EventEmitter;
-
     constructor(properties: GameProperties = {}) {
+        super();
         this.debug = false;
 
         /* Set up some 'private' variables. */
@@ -152,7 +181,6 @@ export default class Game {
             this._requestGameLoopStep = (callback) => requestStep(callback);
             this._cancelGameLoopStep = (id) => cancelStep(id);
         }
-        this._emitter = new EventEmitter();
     }
 
     /* Public Functions */
@@ -471,25 +499,6 @@ export default class Game {
         return this._timeScale;
     }
 
-    on(
-        event: "gameObjectAdded" | "gameObjectRemoved",
-        listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
-    ) {
-        this._emitter.on(event, listener);
-    }
-    off(
-        event: "gameObjectAdded" | "gameObjectRemoved",
-        listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
-    ) {
-        this._emitter.off(event, listener);
-    }
-    once(
-        event: "gameObjectAdded" | "gameObjectRemoved",
-        listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
-    ) {
-        this._emitter.once(event, listener);
-    }
-
     addInputController(controller: InputController) {
         this._inputControllers.push(controller);
     }
@@ -585,7 +594,7 @@ export default class Game {
             if (added.gameObjectAdded) added.gameObjectAdded();
         });
 
-        added.forEach((added) => this._emitter.emit("gameObjectAdded", added));
+        added.forEach((added) => this.emit("gameObjectAdded", added));
 
         resolve(obj);
     }
@@ -660,7 +669,7 @@ export default class Game {
             }
         }
 
-        removed.forEach((removed) => this._emitter.emit("gameObjectRemoved", removed));
+        removed.forEach((removed) => this.emit("gameObjectRemoved", removed));
 
         removed.forEach((removed) => {
             if (removed.gameObjectRemoved) removed.gameObjectRemoved();
@@ -710,7 +719,7 @@ export default class Game {
 
         if (obj.gameObjectMoved) obj.gameObjectMoved(oldParent, newParent);
 
-        this._emitter.emit("gameObjectAdded", obj, oldParent, newParent);
+        this.emit("gameObjectAdded", obj, oldParent, newParent);
 
         resolve(obj);
     }
@@ -794,6 +803,8 @@ export default class Game {
 
     _update(time: RefreshTime) {
         this.traverse(this._gameTree, (obj) => {
+            if (!obj) console.log(this._gameTree);
+
             // Now execute the update of the object (if it wants to be).
             if (obj.update) {
                 obj.update(time);
@@ -862,6 +873,7 @@ export default class Game {
             if (typeof drawReq.id === "number") {
                 // Evaluate to the object
                 const obj = this._gameObjects[drawReq.id];
+                if (!obj) console.log(this._gameTree);
 
                 // First push a restore, if we will be updating.
                 if (obj.draw || (this.debug && obj.debugDraw)) drawGroup.push({ isRestore: true });
