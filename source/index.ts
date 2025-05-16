@@ -1,10 +1,11 @@
 export {
     Game,
     GameProperties,
-    GameEventEmitter,
-    GameEventMap,
     GameEventTypes,
     GameObject,
+    GameObjectEventTypes,
+    EventEmitter,
+    EventMap,
     Container,
     Camera,
     RefreshTime,

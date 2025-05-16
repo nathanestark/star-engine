@@ -1,8 +1,15 @@
+import EventEmitter, { EventMap } from "./event-emitter";
 import Game from "./game";
 import { RefreshTime } from "./types";
 import Camera from "./camera";
 
-export default class GameObject {
+export interface GameObjectEventTypes extends EventMap {
+    gameObjectAdded: [obj: GameObject];
+    gameObjectRemoved: [obj: GameObject];
+    gameObjectMoved: [obj: GameObject, oldParent: GameObject, newParent: GameObject];
+}
+
+export default class GameObject extends EventEmitter<GameObjectEventTypes> {
     _id?: number;
 
     _game: Game;
@@ -25,11 +32,19 @@ export default class GameObject {
 
     childrenSort?(camera: Camera, childObjects: Array<GameObject>): Array<GameObject>;
 
-    gameObjectAdded?(): void;
-    gameObjectRemoved?(): void;
-    gameObjectMoved?(oldParent: GameObject, newParent: GameObject): void;
+    gameObjectAdded(): void {
+        this.emit("gameObjectAdded", this);
+    }
+    gameObjectRemoved?(): void {
+        this.emit("gameObjectRemoved", this);
+    }
+    gameObjectMoved?(oldParent: GameObject, newParent: GameObject): void {
+        this.emit("gameObjectMoved", this, oldParent, newParent);
+    }
 
-    constructor() {}
+    constructor() {
+        super();
+    }
 
     get active() {
         return this._id && this._game && this._game.getGameObject(this._id) == this;

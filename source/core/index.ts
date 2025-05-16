@@ -1,5 +1,6 @@
-import Game, { GameProperties, GameEventEmitter, GameEventMap, GameEventTypes } from "./game";
-import GameObject from "./game-object";
+import Game, { GameProperties, GameEventTypes } from "./game";
+import GameObject, { GameObjectEventTypes } from "./game-object";
+import EventEmitter, { EventMap } from "./event-emitter";
 import Container from "./container";
 import Camera from "./camera";
 import { RefreshTime } from "./types";
@@ -18,10 +19,11 @@ import { rgbToHsl, hslToRgb } from "./color";
 export {
     Game,
     GameProperties,
-    GameEventEmitter,
-    GameEventMap,
     GameEventTypes,
     GameObject,
+    GameObjectEventTypes,
+    EventEmitter,
+    EventMap,
     Container,
     Camera,
     RefreshTime,

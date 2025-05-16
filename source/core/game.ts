@@ -1,9 +1,8 @@
+import EventEmitter, { EventMap } from "./event-emitter";
 import { RefreshTime } from "./types";
 import GameObject from "./game-object";
 import InputController from "./input-controller";
 import Camera from "./camera";
-import { EventEmitter } from "events";
-import { off } from "process";
 
 class GameRoot extends GameObject {
     constructor(game: Game) {
@@ -14,32 +13,7 @@ class GameRoot extends GameObject {
     }
 }
 
-export type GameEventMap = Record<string, any[]>;
-
-export class GameEventEmitter<E extends GameEventMap> {
-    private readonly emitter = new EventEmitter();
-
-    on<K extends keyof E>(event: K, listener: (...args: E[K]) => void): this {
-        this.emitter.on(event as string, listener);
-        return this;
-    }
-
-    once<K extends keyof E>(event: K, listener: (...args: E[K]) => void): this {
-        this.emitter.once(event as string, listener);
-        return this;
-    }
-
-    off<K extends keyof E>(event: K, listener: (...args: E[K]) => void): this {
-        this.emitter.off(event as string, listener);
-        return this;
-    }
-
-    emit<K extends keyof E>(event: K, ...args: E[K]): boolean {
-        return this.emitter.emit(event as string, ...args);
-    }
-}
-
-export interface GameEventTypes extends GameEventMap {
+export interface GameEventTypes extends EventMap {
     gameObjectAdded: [obj: GameObject, oldParent?: GameObject, newParent?: GameObject];
     gameObjectRemoved: [obj: GameObject, oldParent?: GameObject];
 }
@@ -61,7 +35,7 @@ export interface GameProperties {
     };
 }
 
-export default class Game extends GameEventEmitter<GameEventTypes> {
+export default class Game extends EventEmitter<GameEventTypes> {
     debug: boolean;
     _idRange: {
         min: number;
