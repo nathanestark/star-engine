@@ -64,15 +64,17 @@ export function boundingBoxIntersectsBoundingBox(
     boxPointsA: [vec2, vec2],
     boxPointsB: [vec2, vec2]
 ): boolean {
-    const aWidth = boxPointsA[1][0] - boxPointsA[0][0];
-    const bWidth = boxPointsB[1][0] - boxPointsB[0][0];
-    const aHeight = boxPointsA[1][1] - boxPointsA[0][1];
-    const bHeight = boxPointsB[1][1] - boxPointsB[0][1];
+    const minAx = Math.min(boxPointsA[0][0], boxPointsA[1][0]);
+    const maxAx = Math.max(boxPointsA[0][0], boxPointsA[1][0]);
+    const minAy = Math.min(boxPointsA[0][1], boxPointsA[1][1]);
+    const maxAy = Math.max(boxPointsA[0][1], boxPointsA[1][1]);
 
-    return (
-        Math.abs(boxPointsA[0][0] - boxPointsB[0][0]) * 2 < aWidth + bWidth &&
-        Math.abs(boxPointsA[0][1] - boxPointsB[0][1]) * 2 < aHeight + bHeight
-    );
+    const minBx = Math.min(boxPointsB[0][0], boxPointsB[1][0]);
+    const maxBx = Math.max(boxPointsB[0][0], boxPointsB[1][0]);
+    const minBy = Math.min(boxPointsB[0][1], boxPointsB[1][1]);
+    const maxBy = Math.max(boxPointsB[0][1], boxPointsB[1][1]);
+
+    return minAx <= maxBx && maxAx >= minBx && minAy <= maxBy && maxAy >= minBy;
 }
 
 export function circleIntersectsBoundingBox(
