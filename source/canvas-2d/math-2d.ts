@@ -82,8 +82,21 @@ export function circleIntersectsBoundingBox(
     radius: number,
     boxPoints: [vec2, vec2]
 ): boolean {
-    const dX = point[0] - Math.max(boxPoints[0][0], Math.min(point[0], boxPoints[1][0]));
-    const dY = point[1] - Math.max(boxPoints[0][1], Math.min(point[1], boxPoints[1][1]));
+    const px = point[0];
+    const py = point[1];
+
+    const x0 = boxPoints[0][0];
+    const y0 = boxPoints[0][1];
+    const x1 = boxPoints[1][0];
+    const y1 = boxPoints[1][1];
+
+    const minX = x0 < x1 ? x0 : x1;
+    const maxX = x0 > x1 ? x0 : x1;
+    const minY = y0 < y1 ? y0 : y1;
+    const maxY = y0 > y1 ? y0 : y1;
+
+    const dX = px < minX ? px - minX : px > maxX ? px - maxX : 0;
+    const dY = py < minY ? py - minY : py > maxY ? py - maxY : 0;
 
     return dX * dX + dY * dY < radius * radius;
 }
@@ -96,11 +109,13 @@ export function circleOnBoundingBox(
     if (!circleIntersectsBoundingBox(point, radius, boxPoints))
         return 0; // Outside
     else {
+        const px = point[0];
+        const py = point[1];
         if (
-            point[0] - boxPoints[0][0] > radius &&
-            point[1] - boxPoints[0][1] > radius &&
-            boxPoints[1][0] - point[0] > radius &&
-            boxPoints[1][1] - point[1] > radius
+            px - boxPoints[0][0] > radius &&
+            py - boxPoints[0][1] > radius &&
+            boxPoints[1][0] - px > radius &&
+            boxPoints[1][1] - py > radius
         ) {
             return 2; // Completely contained
         } else {
