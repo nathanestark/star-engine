@@ -849,8 +849,10 @@ export default class Game extends EventEmitter<GameEventTypes> {
                 const obj = this._gameObjects[drawReq.id];
                 if (!obj) console.log(this._gameTree);
 
+                const doDraw = (obj.draw || (this.debug && obj.debugDraw)) && camera.allowDraw(obj);
+
                 // First push a restore, if we will be updating.
-                if (obj.draw || (this.debug && obj.debugDraw)) drawGroup.push({ isRestore: true });
+                if (doDraw) drawGroup.push({ isRestore: true });
 
                 // If the object has the 'avoidChildrenDrawing' flag, then we
                 // should not add the children
@@ -880,7 +882,7 @@ export default class Game extends EventEmitter<GameEventTypes> {
                 }
 
                 // Now execute the draw of the object (if it wants to be).
-                if (obj.draw || (this.debug && obj.debugDraw)) {
+                if (doDraw) {
                     camera.saveState(); // Always save if we're drawing.
 
                     // Do the drawing.

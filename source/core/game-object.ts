@@ -27,6 +27,7 @@ export default class GameObject extends EventEmitter<GameObjectEventTypes> {
     avoidChildrenDrawing?: boolean;
 
     update?(time: RefreshTime): void;
+    allowDraw?(camera: Camera): boolean;
     draw?(camera: Camera, time: RefreshTime): void;
     debugDraw?(camera: Camera, time: RefreshTime): void;
 

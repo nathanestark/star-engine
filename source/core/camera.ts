@@ -25,6 +25,13 @@ export default class Camera extends GameObject {
     // Restores the last saved view state back to the current state.
     restoreState() {}
 
+    // Determines if we should attempt a draw for an object.
+    // By default, we always draw. Cameras can return false for
+    // offscreen content (for example).
+    allowDraw(obj: GameObject): boolean {
+        return obj.allowDraw ? obj.allowDraw(this) : true;
+    }
+
     // Requests that the specified object draws itself on the canvas.
     drawObject(obj: GameObject, time: RefreshTime) {
         obj.draw(this, time);

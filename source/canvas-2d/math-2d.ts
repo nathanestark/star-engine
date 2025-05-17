@@ -1,10 +1,21 @@
-import { vec2 } from "gl-matrix";
+import { mat3, vec2, vec3 } from "gl-matrix";
 
 const turn = function (p1: vec2, p2: vec2, p3: vec2): number {
     const a = (p3[0] - p1[0]) * (p2[1] - p1[1]);
     const b = (p2[0] - p1[0]) * (p3[1] - p1[1]);
     return a > b + Number.EPSILON ? 1 : a + Number.EPSILON < b ? -1 : 0;
 };
+
+export function pointInViewMatrix(point: vec2, viewMat: mat3, width: number, height: number) {
+    const pt = vec3.fromValues(point[0], point[1], 1);
+    const cameraPt = vec3.create();
+
+    vec3.transformMat3(cameraPt, pt, viewMat);
+
+    const x = cameraPt[0],
+        y = cameraPt[1];
+    return x >= -width / 2 && x <= width / 2 && y >= -height / 2 && y <= height / 2;
+}
 
 export function pointInPolygon(point: vec2, polygonPoints: Array<vec2>): boolean {
     // First check if the point is the bounding boxPoints.
