@@ -98,9 +98,9 @@ export default class Ball extends GameObject implements GameObject2D, Collidable
         this.children = [this._collider];
     }
 
-    update(tDelta: number) {
+    update(time: RefreshTime) {
         // Apply our total force to our velocity.
-        vec2.scale(this.totalForce, this.totalForce, tDelta / this.mass);
+        vec2.scale(this.totalForce, this.totalForce, time.timeAdvance / this.mass);
         vec2.add(this.velocity, this.velocity, this.totalForce);
         // Check for surface normal force negation.
         this.surfaces.forEach((surface) => {
@@ -152,7 +152,8 @@ export default class Ball extends GameObject implements GameObject2D, Collidable
                     // velocity, since it has to run counter to that velocity.
                     // We can apply it to the entire remaining velocity here, since
                     // we've already negated the surface normal counter force.
-                    const dragMagnitude = vec2.len(this.velocity) * this.rollDrag * tDelta;
+                    const dragMagnitude =
+                        vec2.len(this.velocity) * this.rollDrag * time.timeAdvance;
                     const dragForce = vec2.normalize(vec2.create(), this.velocity);
                     vec2.scale(dragForce, dragForce, dragMagnitude);
                     vec2.sub(this.velocity, this.velocity, dragForce);
@@ -191,7 +192,7 @@ export default class Ball extends GameObject implements GameObject2D, Collidable
             // if (this.color == "white")
             //     console.log("Update", fv(this.velocity), fv(this.position))
             const vel = vec2.clone(this.velocity);
-            vec2.scale(vel, vel, tDelta);
+            vec2.scale(vel, vel, time.timeAdvance);
             vec2.add(this.position, this.position, vel);
             if (Number.isNaN(this.position[0])) {
                 throw "Bad position";

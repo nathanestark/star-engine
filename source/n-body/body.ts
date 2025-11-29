@@ -53,7 +53,7 @@ export default class Body extends GameObject {
         if (name) this.name = name;
     }
 
-    update(tDelta: number) {
+    update(time: RefreshTime) {
         // Save our last position
         if (this.maxSavedPositions > 0) {
             this._lastPositions.push(vec3.clone(this.position));
@@ -62,12 +62,12 @@ export default class Body extends GameObject {
         } else if (this._lastPositions.length > 0) this._lastPositions = [];
 
         // Apply our total force to our velocity.
-        vec3.scale(this.totalForce, this.totalForce, tDelta / this.mass);
+        vec3.scale(this.totalForce, this.totalForce, time.timeAdvance / this.mass);
         vec3.add(this.velocity, this.velocity, this.totalForce);
 
         // Apply our velocity to our position, but don't destroy velocity.
         const vel = vec3.clone(this.velocity);
-        vec3.scale(vel, vel, tDelta);
+        vec3.scale(vel, vel, time.timeAdvance);
         vec3.add(this.position, this.position, vel);
 
         // Reset force.

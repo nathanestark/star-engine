@@ -54,9 +54,9 @@ export default class GameBaseObject extends DrawBaseObject implements GameObject
         this.children = [this._collider];
     }
 
-    update(tDelta: number) {
+    update(time: RefreshTime) {
         // Apply our total force to our velocity.
-        vec2.scale(this.totalForce, this.totalForce, tDelta / this.mass);
+        vec2.scale(this.totalForce, this.totalForce, time.timeAdvance / this.mass);
         vec2.add(this.velocity, this.velocity, this.totalForce);
 
         let sqrSpeed = vec2.sqrLen(this.velocity);
@@ -69,7 +69,7 @@ export default class GameBaseObject extends DrawBaseObject implements GameObject
         // Apply our velocity to our position, but don't destroy velocity.
         if (sqrSpeed > 0) {
             const vel = vec2.clone(this.velocity);
-            vec2.scale(vel, vel, tDelta);
+            vec2.scale(vel, vel, time.timeAdvance);
             vec2.add(this.position, this.position, vel);
         }
         // Reset force.

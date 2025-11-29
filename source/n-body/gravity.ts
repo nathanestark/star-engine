@@ -1,6 +1,7 @@
 import { vec3 } from "gl-matrix";
 import GameObject from "source/core/game-object";
 import Body from "./body";
+import { RefreshTime } from "source/core";
 
 export interface GravityProperties {
     g?: number;
@@ -18,7 +19,7 @@ export default class Gravity extends GameObject {
         if (typeof g === "number") this.g = g;
     }
 
-    update(_dTime: number) {
+    update(_time: RefreshTime): void {
         // Grab all world objects that have mass.
         const objs = this._game.filter("body").filter(function (obj) {
             return (obj as Body).mass > 0;

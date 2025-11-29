@@ -1,11 +1,21 @@
+import EventEmitter, { EventMap } from "./event-emitter";
 import Game from "./game";
 import { RefreshTime } from "./types";
 import Camera from "./camera";
 
-export default class GameObject {
+export interface GameObjectEventTypes extends EventMap {
+    gameObjectAdded: [obj: GameObject];
+    gameObjectRemoved: [obj: GameObject];
+    gameObjectMoved: [obj: GameObject, oldParent: GameObject, newParent: GameObject];
+}
+
+export default class GameObject<
+    T_EventMap extends GameObjectEventTypes = GameObjectEventTypes
+> extends EventEmitter<T_EventMap> {
     _id?: number;
 
     _game: Game;
+    _removed: boolean = false;
     _initialParent?: GameObject;
     _initialChildren?: Array<GameObject>;
     _parent?: number;
@@ -18,17 +28,26 @@ export default class GameObject {
     avoidChildrenUpdate?: boolean;
     avoidChildrenDrawing?: boolean;
 
-    update?(tDelta: number): void;
+    update?(time: RefreshTime): void;
+    allowDraw?(camera: Camera): boolean;
     draw?(camera: Camera, time: RefreshTime): void;
     debugDraw?(camera: Camera, time: RefreshTime): void;
 
     childrenSort?(camera: Camera, childObjects: Array<GameObject>): Array<GameObject>;
 
-    gameObjectAdded?(): void;
-    gameObjectRemoved?(): void;
-    gameObjectMoved?(oldParent: GameObject, newParent: GameObject): void;
+    gameObjectAdded(): void {
+        this.emit("gameObjectAdded", this);
+    }
+    gameObjectRemoved?(): void {
+        this.emit("gameObjectRemoved", this);
+    }
+    gameObjectMoved?(oldParent: GameObject, newParent: GameObject): void {
+        this.emit("gameObjectMoved", this, oldParent, newParent);
+    }
 
-    constructor() {}
+    constructor() {
+        super();
+    }
 
     get active() {
         return this._id && this._game && this._game.getGameObject(this._id) == this;
@@ -73,7 +92,7 @@ export default class GameObject {
     }
 
     get tags(): Array<string> {
-        if (!this.active) return this._initialTags;
+        if (!this.active && !this._removed) return this._initialTags;
 
         return this._tags;
     }

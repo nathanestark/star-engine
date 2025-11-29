@@ -7,7 +7,7 @@ import { RefreshTime } from "source/core/types";
 import GameObject from "source/core/game-object";
 
 export default class CollisionDetection extends GameObject {
-    _maxBounds: [vec2, vec2];
+    maxBounds: [vec2, vec2];
     quadTree: QuadTree; // Store the quadtree after each update so we can
     // Debug draw it if requested.
 
@@ -15,30 +15,30 @@ export default class CollisionDetection extends GameObject {
         super();
 
         if (!maxBounds) {
-            this._maxBounds = [
+            this.maxBounds = [
                 vec2.fromValues(Number.MIN_VALUE, Number.MIN_VALUE),
                 vec2.fromValues(Number.MAX_VALUE, Number.MAX_VALUE)
             ];
-        } else this._maxBounds = maxBounds;
+        } else this.maxBounds = maxBounds;
     }
 
-    update(tDelta: number) {
+    update(time: RefreshTime) {
         // Grab all colliders.
         const objs = this.game.filter("collider") as unknown as Array<ICollider>;
 
         const collisionMap = new Map<ICollider, Array<CollisionResult>>();
 
         // Arrange colliders into a quadtree.
-        const quadTree = (this.quadTree = new QuadTree(this._maxBounds, 1));
+        const quadTree = (this.quadTree = new QuadTree(this.maxBounds, 1));
 
         for (let i = 0; i < objs.length; i++) {
-            quadTree.insert(objs[i]);
+            if (objs[i].canCollide) quadTree.insert(objs[i]);
         }
 
         // Test each collider against each other.
         quadTree.test(function (obj1, obj2) {
             // Perform test and get any collision results.
-            const collisions = obj1.testCollision(obj2, tDelta);
+            const collisions = obj1.testCollision(obj2, time.timeAdvance);
             if (collisions != null) {
                 for (let c = 0; c < collisions.length; c++) {
                     // Add collision to the collisions map for the first collider.

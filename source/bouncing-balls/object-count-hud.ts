@@ -1,5 +1,6 @@
 import Game from "source/core/game";
 import TextHud, { TextHudProperties } from "../canvas-2d/huds/text-hud";
+import { RefreshTime } from "source/core";
 
 export default class ObjectCountHud extends TextHud {
     _lastPrint: number;
@@ -13,8 +14,8 @@ export default class ObjectCountHud extends TextHud {
         this._calculateInterval = 0.5;
     }
 
-    update(tDelta: number) {
-        this._lastCalculateTime += tDelta;
+    update(time: RefreshTime) {
+        this._lastCalculateTime += time.timeAdvance;
         if (this._lastCalculateTime >= this._calculateInterval) {
             this._lastCalculateTime = 0;
             this._lastPrint = this.game.filter({ op: "exclusive", tags: ["ball"] }).length;

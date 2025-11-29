@@ -1,7 +1,11 @@
 export {
     Game,
     GameProperties,
+    GameEventTypes,
     GameObject,
+    GameObjectEventTypes,
+    EventEmitter,
+    EventMap,
     Container,
     Camera,
     RefreshTime,
@@ -13,7 +17,10 @@ export {
     CONTROLLER_ACTION,
     CONTROLLER_VALUE,
     Resources,
-    Resource
+    Resource,
+    SeededRNG,
+    rgbToHsl,
+    hslToRgb
 } from "./core";
 export {
     GameObject2D,

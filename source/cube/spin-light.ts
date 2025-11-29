@@ -1,8 +1,8 @@
 import { vec3 } from "gl-matrix";
-import { AmbientLight, DirectionalLight } from "source/canvas-3d";
+import { DirectionalLight } from "source/canvas-3d";
+import { RefreshTime } from "source/core";
 
 export class SpinLight extends DirectionalLight {
-    private time = 0;
     constructor() {
         super({
             color: vec3.fromValues(0.6, 0.1, 0.1),
@@ -10,10 +10,9 @@ export class SpinLight extends DirectionalLight {
             emitAutoUpdateEvents: false
         });
     }
-    update(tDelta: number): void {
-        this.time += tDelta;
-        const x = Math.sin(this.time / 5);
-        const z = Math.cos(this.time / 5);
+    update(time: RefreshTime): void {
+        const x = Math.sin(time.curTime / 500);
+        const z = Math.cos(time.curTime / 500);
         vec3.normalize(this.direction, vec3.fromValues(x, 0, z));
         this.emitUpdated();
     }

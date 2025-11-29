@@ -1,10 +1,21 @@
-import { vec2 } from "gl-matrix";
+import { mat3, vec2, vec3 } from "gl-matrix";
 
 const turn = function (p1: vec2, p2: vec2, p3: vec2): number {
     const a = (p3[0] - p1[0]) * (p2[1] - p1[1]);
     const b = (p2[0] - p1[0]) * (p3[1] - p1[1]);
     return a > b + Number.EPSILON ? 1 : a + Number.EPSILON < b ? -1 : 0;
 };
+
+export function pointInViewMatrix(point: vec2, viewMat: mat3, width: number, height: number) {
+    const pt = vec3.fromValues(point[0], point[1], 1);
+    const cameraPt = vec3.create();
+
+    vec3.transformMat3(cameraPt, pt, viewMat);
+
+    const x = cameraPt[0],
+        y = cameraPt[1];
+    return x >= -width / 2 && x <= width / 2 && y >= -height / 2 && y <= height / 2;
+}
 
 export function pointInPolygon(point: vec2, polygonPoints: Array<vec2>): boolean {
     // First check if the point is the bounding boxPoints.
@@ -53,15 +64,17 @@ export function boundingBoxIntersectsBoundingBox(
     boxPointsA: [vec2, vec2],
     boxPointsB: [vec2, vec2]
 ): boolean {
-    const aWidth = boxPointsA[1][0] - boxPointsA[0][0];
-    const bWidth = boxPointsB[1][0] - boxPointsB[0][0];
-    const aHeight = boxPointsA[1][1] - boxPointsA[0][1];
-    const bHeight = boxPointsB[1][1] - boxPointsB[0][1];
+    const minAx = Math.min(boxPointsA[0][0], boxPointsA[1][0]);
+    const maxAx = Math.max(boxPointsA[0][0], boxPointsA[1][0]);
+    const minAy = Math.min(boxPointsA[0][1], boxPointsA[1][1]);
+    const maxAy = Math.max(boxPointsA[0][1], boxPointsA[1][1]);
 
-    return (
-        Math.abs(boxPointsA[0][0] - boxPointsB[0][0]) * 2 < aWidth + bWidth &&
-        Math.abs(boxPointsA[0][1] - boxPointsB[0][1]) * 2 < aHeight + bHeight
-    );
+    const minBx = Math.min(boxPointsB[0][0], boxPointsB[1][0]);
+    const maxBx = Math.max(boxPointsB[0][0], boxPointsB[1][0]);
+    const minBy = Math.min(boxPointsB[0][1], boxPointsB[1][1]);
+    const maxBy = Math.max(boxPointsB[0][1], boxPointsB[1][1]);
+
+    return minAx <= maxBx && maxAx >= minBx && minAy <= maxBy && maxAy >= minBy;
 }
 
 export function circleIntersectsBoundingBox(
@@ -69,8 +82,21 @@ export function circleIntersectsBoundingBox(
     radius: number,
     boxPoints: [vec2, vec2]
 ): boolean {
-    const dX = point[0] - Math.max(boxPoints[0][0], Math.min(point[0], boxPoints[1][0]));
-    const dY = point[1] - Math.max(boxPoints[0][1], Math.min(point[1], boxPoints[1][1]));
+    const px = point[0];
+    const py = point[1];
+
+    const x0 = boxPoints[0][0];
+    const y0 = boxPoints[0][1];
+    const x1 = boxPoints[1][0];
+    const y1 = boxPoints[1][1];
+
+    const minX = x0 < x1 ? x0 : x1;
+    const maxX = x0 > x1 ? x0 : x1;
+    const minY = y0 < y1 ? y0 : y1;
+    const maxY = y0 > y1 ? y0 : y1;
+
+    const dX = px < minX ? px - minX : px > maxX ? px - maxX : 0;
+    const dY = py < minY ? py - minY : py > maxY ? py - maxY : 0;
 
     return dX * dX + dY * dY < radius * radius;
 }
@@ -83,11 +109,13 @@ export function circleOnBoundingBox(
     if (!circleIntersectsBoundingBox(point, radius, boxPoints))
         return 0; // Outside
     else {
+        const px = point[0];
+        const py = point[1];
         if (
-            point[0] - boxPoints[0][0] > radius &&
-            point[1] - boxPoints[0][1] > radius &&
-            boxPoints[1][0] - point[0] > radius &&
-            boxPoints[1][1] - point[1] > radius
+            px - boxPoints[0][0] > radius &&
+            py - boxPoints[0][1] > radius &&
+            boxPoints[1][0] - px > radius &&
+            boxPoints[1][1] - py > radius
         ) {
             return 2; // Completely contained
         } else {

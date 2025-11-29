@@ -4,5 +4,6 @@
     "editor.formatOnSave": true, // optional
     "editor.formatOnSaveMode": "file",
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.detectIndentation": false // required to format on save
+    "editor.detectIndentation": false, // required to format on save
+    "editor.tabSize": 4 // required to format on save
 }

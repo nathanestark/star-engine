@@ -84,9 +84,9 @@ export default class ShapeEntity extends GameObject implements GameObject3D {
         this.model.scale = value;
     }
 
-    update(tDelta: number) {
+    update(time: RefreshTime): void {
         // Apply our total force to our velocity.
-        vec3.scale(this.totalForce, this.totalForce, tDelta / this.mass);
+        vec3.scale(this.totalForce, this.totalForce, time.timeAdvance / this.mass);
         vec3.add(this.velocity, this.velocity, this.totalForce);
 
         let sqrSpeed = vec3.sqrLen(this.velocity);
@@ -99,7 +99,7 @@ export default class ShapeEntity extends GameObject implements GameObject3D {
         // Apply our velocity to our position, but don't destroy velocity.
         if (sqrSpeed > 0) {
             const vel = vec3.clone(this.velocity);
-            vec3.scale(vel, vel, tDelta);
+            vec3.scale(vel, vel, time.timeAdvance);
             vec3.add(this.position, this.position, vel);
             if (Number.isNaN(this.position[0])) {
                 throw "Bad position";

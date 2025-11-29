@@ -35,8 +35,8 @@ export default class BoundingBoxCollider extends Collider<BoundingBoxCollidable>
         };
     }
 
-    update(tDelta: number) {
-        super.update(tDelta);
+    update(time: RefreshTime) {
+        super.update(time);
 
         if (!this.static) {
             this.bounds = this.owner.bounds;

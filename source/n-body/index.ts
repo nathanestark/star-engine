@@ -11,12 +11,11 @@ import Gravity from "./gravity";
 import Body from "./body";
 
 import RandomWorldObjects from "./random-system";
-import DefaultCamera from "./default-camera";
 import GameObject from "source/core/game-object";
 import WorldObjects from "./world-objects";
-// import ResonenceWorldObjects from './resonence-system';
-// import SolarSystemObjects from './solar-system';
-// import Generator, { PregeneratedSystem as PregeneratedSystemObjects } from './system-generator';
+import ResonenceWorldObjects from "./resonence-system";
+import SolarSystemObjects from "./solar-system";
+import Generator, { PregeneratedSystem as PregeneratedSystemObjects } from "./system-generator";
 
 export default class SolarSystem extends Game {
     selected: Body;
@@ -44,9 +43,9 @@ export default class SolarSystem extends Game {
 
         const worldObjects = new WorldObjects();
         worldObjects.children = new RandomWorldObjects(gravity).objects.children;
-        //        const worldObjects = new SolarSystemObjects(gravity).objects;
-        //        const worldObjects = new ResonenceWorldObjects(gravity).objects;
-        //        const worldObjects = new PregeneratedSystemObjects(new Generator().generateSystem()).objects;
+        // worldObjects.children = new SolarSystemObjects().objects.children;
+        // worldObjects.children = new ResonenceWorldObjects(gravity).objects.children;
+        // worldObjects.children = new PregeneratedSystemObjects(new Generator().generateSystem({})).objects.children;
 
         // Determine initial zoom based on objects in scene.
         const maxX = (worldObjects.children as Array<Body>).reduce(
@@ -61,7 +60,6 @@ export default class SolarSystem extends Game {
             (p, o) => Math.max(p, Math.abs(o.position[2]) + o.radius),
             0
         );
-
         const zoomX = Math.min(canvases[0].width / maxX, canvases[0].height / maxY);
         const zoomY = Math.min(canvases[1].width / maxX, canvases[1].height / maxZ);
         const zoomZ = Math.min(canvases[2].width / maxY, canvases[2].height / maxZ);
@@ -157,7 +155,7 @@ export default class SolarSystem extends Game {
                 cameras.push(camera3);
                 cameras.push(fCamera3);
 
-                +cameras.forEach((c) => {
+                cameras.forEach((c) => {
                     const ticks = e.key == "-" ? -1 : 1;
 
                     c.zoom[0] *= Math.pow(2, ticks / 5);

@@ -113,7 +113,7 @@ export default class Ship extends GameBaseObject {
         this._rotate = on ? 0.06 : 0;
     }
 
-    update(tDelta: number) {
+    update(time: RefreshTime) {
         // Add our rotation
         this.rotation += this._rotate;
 
@@ -129,7 +129,7 @@ export default class Ship extends GameBaseObject {
             vec2.add(this.totalForce, this.totalForce, vec2.fromValues(temp[0], temp[1]));
         }
 
-        super.update(tDelta);
+        super.update(time);
     }
 
     onCollided(thisObj: CircleColliderResult, otherObj: ColliderResult) {

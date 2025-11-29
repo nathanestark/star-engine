@@ -1,9 +1,8 @@
+import EventEmitter, { EventMap } from "./event-emitter";
 import { RefreshTime } from "./types";
 import GameObject from "./game-object";
 import InputController from "./input-controller";
 import Camera from "./camera";
-import { EventEmitter } from "events";
-import { off } from "process";
 
 class GameRoot extends GameObject {
     constructor(game: Game) {
@@ -12,6 +11,11 @@ class GameRoot extends GameObject {
         this._id = 0;
         this._children = [];
     }
+}
+
+export interface GameEventTypes extends EventMap {
+    gameObjectAdded: [obj: GameObject, oldParent?: GameObject, newParent?: GameObject];
+    gameObjectRemoved: [obj: GameObject, oldParent?: GameObject];
 }
 
 export interface GameProperties {
@@ -31,7 +35,9 @@ export interface GameProperties {
     };
 }
 
-export default class Game {
+export default class Game<
+    T_EventMap extends GameEventTypes = GameEventTypes
+> extends EventEmitter<T_EventMap> {
     debug: boolean;
     _idRange: {
         min: number;
@@ -74,9 +80,8 @@ export default class Game {
     _requestGameLoopStep: (callback: () => void) => number;
     _cancelGameLoopStep: (loopId: number) => void;
 
-    _emitter: EventEmitter;
-
     constructor(properties: GameProperties = {}) {
+        super();
         this.debug = false;
 
         /* Set up some 'private' variables. */
@@ -142,7 +147,7 @@ export default class Game {
                     const timeToCall = Math.max(0, this._minUpdateTime - (curTime - lastTime));
                     const id = +setTimeout(function () {
                         callback(curTime + timeToCall);
-                    }, timeToCall);
+                    }, timeToCall); // +setTimeout forces it to a number.
                     lastTime = curTime + timeToCall;
                     return id;
                 };
@@ -152,7 +157,6 @@ export default class Game {
             this._requestGameLoopStep = (callback) => requestStep(callback);
             this._cancelGameLoopStep = (id) => cancelStep(id);
         }
-        this._emitter = new EventEmitter();
     }
 
     /* Public Functions */
@@ -453,6 +457,11 @@ export default class Game {
         if (this._moveList.has(id))
             throw "The specified object is scheduled for being moved and cannot be removed.";
 
+        // Children first.
+        (obj._children || []).forEach((child) => {
+            if (this.getGameObject(child)?.active) this.removeGameObject(child);
+        });
+
         return await new Promise((resolve, reject) => {
             this._removingList.set(id, { obj: obj, resolve: resolve, reject: reject });
         });
@@ -464,25 +473,6 @@ export default class Game {
 
     getTimeScale() {
         return this._timeScale;
-    }
-
-    on(
-        event: "gameObjectAdded" | "gameObjectRemoved",
-        listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
-    ) {
-        this._emitter.on(event, listener);
-    }
-    off(
-        event: "gameObjectAdded" | "gameObjectRemoved",
-        listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
-    ) {
-        this._emitter.off(event, listener);
-    }
-    once(
-        event: "gameObjectAdded" | "gameObjectRemoved",
-        listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
-    ) {
-        this._emitter.once(event, listener);
     }
 
     addInputController(controller: InputController) {
@@ -580,7 +570,7 @@ export default class Game {
             if (added.gameObjectAdded) added.gameObjectAdded();
         });
 
-        added.forEach((added) => this._emitter.emit("gameObjectAdded", added));
+        added.forEach((added) => this.emit("gameObjectAdded", added));
 
         resolve(obj);
     }
@@ -644,6 +634,7 @@ export default class Game {
                 delete this._gameObjects[obj.id];
 
                 delete obj._game;
+                obj._removed = true;
 
                 removed.push(obj);
             } else {
@@ -654,7 +645,7 @@ export default class Game {
             }
         }
 
-        removed.forEach((removed) => this._emitter.emit("gameObjectRemoved", removed));
+        removed.forEach((removed) => this.emit("gameObjectRemoved", removed));
 
         removed.forEach((removed) => {
             if (removed.gameObjectRemoved) removed.gameObjectRemoved();
@@ -704,7 +695,7 @@ export default class Game {
 
         if (obj.gameObjectMoved) obj.gameObjectMoved(oldParent, newParent);
 
-        this._emitter.emit("gameObjectAdded", obj, oldParent, newParent);
+        this.emit("gameObjectAdded", obj, oldParent, newParent);
 
         resolve(obj);
     }
@@ -723,6 +714,7 @@ export default class Game {
 
             const curTime = Date.now();
 
+            const lastUpdateTime = this._lastUpdateTime;
             const elapsed = curTime - this._lastUpdateTime;
             this._lastUpdateTime = curTime;
 
@@ -743,7 +735,13 @@ export default class Game {
 
                 while (updateTime >= this._minUpdateTime) {
                     // Update the world
-                    this._update(tDelta);
+                    this._update({
+                        timeAdvance: tDelta,
+                        timeScale: this._timeScale,
+                        animationTime: animationTime,
+                        curTime: curTime,
+                        lastTime: lastUpdateTime
+                    });
                     updateTime -= this._minUpdateTime;
                 }
             }
@@ -754,7 +752,7 @@ export default class Game {
                 timeScale: this._timeScale,
                 animationTime: animationTime,
                 curTime: curTime,
-                lastTime: this._lastUpdateTime
+                lastTime: lastUpdateTime
             });
 
             // Loop again.
@@ -779,11 +777,13 @@ export default class Game {
         }
     }
 
-    _update(tDelta: number) {
+    _update(time: RefreshTime) {
         this.traverse(this._gameTree, (obj) => {
+            if (!obj) console.log(this._gameTree);
+
             // Now execute the update of the object (if it wants to be).
             if (obj.update) {
-                obj.update(tDelta);
+                obj.update(time);
             }
 
             // If the object has the 'avoidChildrenUpdate' flag, then we
@@ -849,9 +849,12 @@ export default class Game {
             if (typeof drawReq.id === "number") {
                 // Evaluate to the object
                 const obj = this._gameObjects[drawReq.id];
+                if (!obj) console.log(this._gameTree);
+
+                const doDraw = (obj.draw || (this.debug && obj.debugDraw)) && camera.allowDraw(obj);
 
                 // First push a restore, if we will be updating.
-                if (obj.draw || (this.debug && obj.debugDraw)) drawGroup.push({ isRestore: true });
+                if (doDraw) drawGroup.push({ isRestore: true });
 
                 // If the object has the 'avoidChildrenDrawing' flag, then we
                 // should not add the children
@@ -881,7 +884,7 @@ export default class Game {
                 }
 
                 // Now execute the draw of the object (if it wants to be).
-                if (obj.draw || (this.debug && obj.debugDraw)) {
+                if (doDraw) {
                     camera.saveState(); // Always save if we're drawing.
 
                     // Do the drawing.

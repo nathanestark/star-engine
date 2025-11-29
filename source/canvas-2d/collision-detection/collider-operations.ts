@@ -12,6 +12,7 @@ export interface CollisionResult {
 export interface ColliderResult {
     collider: ICollider;
     owner: Collidable | null;
+    canceled: boolean;
 }
 
 export interface CircleColliderResult extends ColliderResult {
@@ -24,7 +25,7 @@ export interface CircleColliderResult extends ColliderResult {
     radius: number;
 }
 
-export interface BoundingBoxColliderResult {
+export interface BoundingBoxColliderResult extends ColliderResult {
     collider: BoundingBoxCollider;
     owner: Collidable | null;
     plane: vec2;
@@ -116,6 +117,7 @@ export function testCircleOnCircleCollisons(
                 obj1: {
                     collider: collider1,
                     owner: collider1.owner,
+                    canceled: false,
                     position: pos1,
                     normal: norm1,
                     velocity: vec2.clone(collider1.velocity),
@@ -125,6 +127,7 @@ export function testCircleOnCircleCollisons(
                 obj2: {
                     collider: collider2,
                     owner: collider2.owner,
+                    canceled: false,
                     position: pos2,
                     normal: norm2,
                     velocity: vec2.clone(collider2.velocity),
@@ -195,6 +198,7 @@ export function testCircleOnBoundingBoxCollisions(
                     obj1: {
                         collider: circleCollider,
                         owner: circleCollider.owner,
+                        canceled: false,
                         position: pos1,
                         normal: vec2.fromValues((1 - axis) * (1 - pI * 2), axis * (1 - pI * 2)),
                         velocity: vec2.clone(circleCollider.velocity),
@@ -204,6 +208,7 @@ export function testCircleOnBoundingBoxCollisions(
                     obj2: {
                         collider: bbCollider,
                         owner: bbCollider.owner,
+                        canceled: false,
                         plane: vec2.fromValues(
                             (1 - axis) * points[pI][axis],
                             axis * points[pI][axis]
@@ -232,11 +237,13 @@ export function testBoundingBoxOnBoundingBoxCollisions(
                 obj1: {
                     collider: collider1,
                     owner: collider1.owner,
+                    canceled: false,
                     plane: vec2.fromValues(1, 0) // FIX
                 },
                 obj2: {
                     collider: collider2,
                     owner: collider2.owner,
+                    canceled: false,
                     plane: vec2.fromValues(1, 0) // FIX
                 }
             }

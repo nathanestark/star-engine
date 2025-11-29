@@ -20,8 +20,8 @@ export default class BouncingBalls extends Game {
         this.setTimeScale(10);
 
         const worldBounds = new WorldBounds({
-            position: vec2.fromValues(-250, -250),
-            size: vec2.fromValues(10000, 10000)
+            position: vec2.fromValues(0, 0),
+            size: vec2.fromValues(1000, 800)
         });
 
         const hud = new Hud();
@@ -50,9 +50,9 @@ export default class BouncingBalls extends Game {
                 let r = 1; //Math.random();
                 worldObjects.push(
                     new Ball({
-                        radius: r * 100,
+                        radius: r * 10,
                         mass: r,
-                        elasticity: 0.8,
+                        elasticity: 0.9,
                         rollDrag: 0.05,
                         position: vec2.fromValues(
                             worldBounds.position[0] + padX / 2 + x * padX,
@@ -73,7 +73,7 @@ export default class BouncingBalls extends Game {
 
         const camera = new Camera(canvas, {
             position: vec2.scaleAndAdd(vec2.create(), worldBounds.position, worldBounds.size, 0.5),
-            zoom: 0.05
+            zoom: 1
         });
 
         canvas.addEventListener("contextmenu", function (e) {

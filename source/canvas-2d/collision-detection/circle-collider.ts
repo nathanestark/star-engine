@@ -35,8 +35,8 @@ export default class CircleCollider extends Collider<CircleCollidable> {
         };
     }
 
-    update(tDelta: number) {
-        super.update(tDelta);
+    update(time: RefreshTime) {
+        super.update(time);
 
         if (!this.static) {
             this.radius = this.owner.radius;
