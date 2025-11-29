@@ -165,10 +165,12 @@ export function circleIntersectsCircle(
 }
 
 export function createBoundingBoxFromPoly(polygonPoints: Array<vec2>): [vec2, vec2] {
-    let bpMinX = Number.MAX_VALUE;
-    let bpMinY = Number.MAX_VALUE;
-    let bpMaxX = Number.MIN_VALUE;
-    let bpMaxY = Number.MIN_VALUE;
+    if (polygonPoints.length == 0) throw new Error("Invalid number of points: 0");
+
+    let bpMinX = Number.POSITIVE_INFINITY;
+    let bpMinY = Number.POSITIVE_INFINITY;
+    let bpMaxX = Number.NEGATIVE_INFINITY;
+    let bpMaxY = Number.NEGATIVE_INFINITY;
 
     for (let p = 0; p < polygonPoints.length; p++) {
         const point = polygonPoints[p];
@@ -179,7 +181,7 @@ export function createBoundingBoxFromPoly(polygonPoints: Array<vec2>): [vec2, ve
         if (point[1] > bpMaxY) bpMaxY = point[1];
     }
 
-    return [vec2.fromValues(bpMaxX, bpMaxY), vec2.fromValues(bpMaxX, bpMaxY)];
+    return [vec2.fromValues(bpMinX, bpMinY), vec2.fromValues(bpMaxX, bpMaxY)];
 }
 
 export function createBoundingBoxFromCircle(point: vec2, radius: number): [vec2, vec2] {

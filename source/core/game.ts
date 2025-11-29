@@ -467,19 +467,19 @@ export default class Game {
     }
 
     on(
-        event: "gameObjectAdded" | "gameObjectRemoved" | "gameObjectRemoved",
+        event: "gameObjectAdded" | "gameObjectRemoved",
         listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
     ) {
         this._emitter.on(event, listener);
     }
     off(
-        event: "gameObjectAdded" | "gameObjectRemoved" | "gameObjectRemoved",
+        event: "gameObjectAdded" | "gameObjectRemoved",
         listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
     ) {
         this._emitter.off(event, listener);
     }
     once(
-        event: "gameObjectAdded" | "gameObjectRemoved" | "gameObjectRemoved",
+        event: "gameObjectAdded" | "gameObjectRemoved",
         listener: (obj: GameObject, oldParent?: GameObject, newParent?: GameObject) => void
     ) {
         this._emitter.once(event, listener);

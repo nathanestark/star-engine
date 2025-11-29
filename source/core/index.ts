@@ -1,17 +1,17 @@
-import Game, { GameProperties } from "./game";
+import Game, { type GameProperties } from "./game";
 import GameObject from "./game-object";
 import Container from "./container";
 import Camera from "./camera";
-import { RefreshTime } from "./types";
+import type { RefreshTime } from "./types";
 import InputController, {
-    Device,
-    Bind,
-    BindKey,
-    TriggerCallEvent,
+    type Device,
+    type Bind,
+    type BindKey,
+    type TriggerCallEvent,
     CONTROLLER_ACTION,
     CONTROLLER_VALUE
 } from "./input-controller";
-import Resources, { Resource } from "./resources";
+import Resources, { type Resource } from "./resources";
 
 export {
     Game,

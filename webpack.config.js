@@ -85,7 +85,8 @@ const productionConfig = Object.assign({}, baseConfig, {
     entry: {
         "n-body": "./source/n-body-entry.ts",
         "bouncing-balls": "./source/bouncing-balls.ts",
-        asteroids: "./source/asteroids.ts"
+        asteroids: "./source/asteroids.ts",
+        cube: "./source/cube.ts"
     },
     optimization: { minimize: true }
 });
@@ -98,7 +99,8 @@ const configs = {
         entry: {
             "n-body": "./source/n-body-entry.ts",
             "bouncing-balls": "./source/bouncing-balls-entry.ts",
-            asteroids: "./source/asteroids-entry.ts"
+            asteroids: "./source/asteroids-entry.ts",
+            cube: "./source/cube-entry.ts"
         }
     })
 };
