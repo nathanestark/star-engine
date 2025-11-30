@@ -27,6 +27,8 @@ export class LightManager extends GameObject {
     constructor({ bindPoint }: LightManagerPropeties) {
         super();
 
+        this.classTags = ["lightManager"];
+
         this.bindPoint = bindPoint;
     }
 

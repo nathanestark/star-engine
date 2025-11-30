@@ -21,8 +21,12 @@ export class Model extends GameObject {
     pivot: vec3;
     scale: vec3;
 
+    worldMatrix: mat4 = mat4.create();
+
     constructor({ mesh, position, center, rotation, pivot, scale }: ModelProperties) {
         super();
+
+        this.classTags = ["model"];
 
         this.mesh = mesh;
 
@@ -33,26 +37,55 @@ export class Model extends GameObject {
         this.scale = scale ?? vec3.fromValues(1, 1, 1);
     }
 
-    draw(camera: Canvas3DCamera, _time: RefreshTime) {
+    get meshId() {
+        return this.mesh.id;
+    }
+
+    get meshSize() {
+        return this.mesh.size;
+    }
+
+    get program() {
+        return this.mesh.program;
+    }
+
+    get shader() {
+        return this.mesh.shader;
+    }
+
+    get vao() {
+        return this.mesh.vao;
+    }
+
+    init(gl: WebGL2RenderingContext) {}
+
+    apply(camera: Canvas3DCamera): void {
+        this.mesh.apply(camera);
+    }
+
+    managerDraw(camera: Canvas3DCamera, _time: RefreshTime, instanceIndex: number) {
         const { context: gl } = camera;
 
-        const worldMatrix = mat4.create();
-        mat4.translate(worldMatrix, worldMatrix, this.position);
-        mat4.translate(worldMatrix, worldMatrix, this.pivot);
-        mat4.translate(worldMatrix, worldMatrix, this.center);
+        mat4.identity(this.worldMatrix);
+        mat4.translate(this.worldMatrix, this.worldMatrix, this.position);
+        mat4.translate(this.worldMatrix, this.worldMatrix, this.pivot);
+        mat4.translate(this.worldMatrix, this.worldMatrix, this.center);
         const rotationMatrix = mat4.fromQuat(mat4.create(), this.rotation);
-        mat4.multiply(worldMatrix, worldMatrix, rotationMatrix);
-        mat4.scale(worldMatrix, worldMatrix, this.scale);
-        mat4.translate(worldMatrix, worldMatrix, vec3.negate(vec3.create(), this.center));
-        mat4.translate(worldMatrix, worldMatrix, vec3.negate(vec3.create(), this.pivot));
+        mat4.multiply(this.worldMatrix, this.worldMatrix, rotationMatrix);
+        mat4.scale(this.worldMatrix, this.worldMatrix, this.scale);
+        mat4.translate(this.worldMatrix, this.worldMatrix, vec3.negate(vec3.create(), this.center));
+        mat4.translate(this.worldMatrix, this.worldMatrix, vec3.negate(vec3.create(), this.pivot));
 
-        gl.uniformMatrix4fv(this.mesh.uniformLocations.modelMatrix, false, worldMatrix);
+        // gl.uniformMatrix4fv(this.mesh.uniformLocations.modelMatrix, false, worldMatrix);
 
-        // Applying should be done once per group of writes.
-        // TODO: group similar meshes together, to write all at once without
-        // switching.
-        this.mesh.apply(camera);
+        // gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
+        gl.bufferSubData(gl.ARRAY_BUFFER, instanceIndex * 64, this.worldMatrix as Float32Array);
 
-        gl.drawArrays(gl.TRIANGLES, 0, this.mesh.size);
+        // // Applying should be done once per group of writes.
+        // // TODO: group similar meshes together, to write all at once without
+        // // switching.
+        // this.mesh.apply(camera);
+
+        // gl.drawArraysInstanced(gl.TRIANGLES, 0, this.mesh.size, 1);
     }
 }

@@ -10,7 +10,7 @@ export interface MaterialProperties {
 }
 
 export class Material extends GameObject {
-    private shader: Shader;
+    private _shader: Shader;
     private textures: Array<MaterialTexture>;
 
     constructor({ shader, textures }: MaterialProperties) {
@@ -18,7 +18,7 @@ export class Material extends GameObject {
 
         this.avoidChildrenDrawing = true;
 
-        this.shader = shader;
+        this._shader = shader;
         this.textures = textures;
     }
 
@@ -27,6 +27,10 @@ export class Material extends GameObject {
             shader,
             textures: [{ location: "texture", texture: new ColorTexture(color) }]
         });
+    }
+
+    get shader() {
+        return this._shader;
     }
 
     get program() {

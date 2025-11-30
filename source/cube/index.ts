@@ -12,6 +12,7 @@ import { Material } from "source/canvas-3d/materials";
 import { UboBindPointManager, UboDataType } from "source/canvas-3d/ubo-bind-point-manager";
 import { PulseLight } from "./pulse-light";
 import { SpinLight } from "./spin-light";
+import { ModelManager } from "source/canvas-3d/models";
 
 export default class Cube extends Game {
     resources: Resources;
@@ -112,6 +113,33 @@ export default class Cube extends Game {
                 const ambientLight = new AmbientLight({ color: [0.05, 0.05, 0.05] });
                 const pulseLight = new PulseLight();
                 const spinLight = new SpinLight();
+
+                const modelManager = new ModelManager(10000);
+
+                const extraCubes = [];
+                for (let x = 0; x < 1000; x++) {
+                    const rotation = quat.create();
+                    quat.rotateX(rotation, rotation, (-Math.PI / 2) * Math.random());
+                    quat.rotateY(rotation, rotation, (-Math.PI / 2) * Math.random());
+                    quat.rotateZ(rotation, rotation, (-Math.PI / 2) * Math.random());
+
+                    extraCubes.push(
+                        new ShapeEntity({
+                            scale: vec3.fromValues(1, 1, 1),
+                            mass: 1,
+                            position: vec3.fromValues(
+                                (-5 + (x % 10)) * 4,
+                                (-5 + Math.floor((x % 100) / 10)) * 4,
+                                5 + (-5 + -Math.floor(x / 100)) * 4
+                            ),
+                            center: vec3.fromValues(0, 0, 0),
+                            velocity: vec3.fromValues(0, 0, 0),
+                            pivot: vec3.fromValues(0, 0, 0),
+                            rotation,
+                            mesh: cubeMesh //Math.round(Math.random()) == 0 ? cubeMesh : sphereMesh
+                        })
+                    );
+                }
                 worldObjects.push(
                     bindPointManager,
                     lightManager,
@@ -144,7 +172,9 @@ export default class Cube extends Game {
                         pivot: vec3.fromValues(0, 0, 0),
                         // rotation: quat.rotateX(quat.create(), quat.create(), -Math.PI / 2)
                         mesh: sphereMesh
-                    })
+                    }),
+                    ...extraCubes,
+                    modelManager
                 );
 
                 // Set up our camera.

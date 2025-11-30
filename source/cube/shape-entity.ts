@@ -36,10 +36,11 @@ export default class ShapeEntity extends GameObject implements GameObject3D {
     }: ShapeEntityProperties = {}) {
         super();
 
-        this.classTags = ["cube"];
+        this.classTags = ["shape"];
         this.avoidChildrenDrawing = true;
 
         this.model = new Model({ mesh, position, center, rotation, pivot, scale });
+        this.children = [this.model];
 
         this.mass = 1;
         this.velocity = vec3.create();
@@ -115,6 +116,6 @@ export default class ShapeEntity extends GameObject implements GameObject3D {
     }
 
     draw(camera: DefaultCamera, time: RefreshTime) {
-        this.model.draw(camera, time);
+        // this.model.draw(camera, time);
     }
 }
