@@ -6,7 +6,7 @@ import ShapeEntity from "./shape-entity";
 import GameObject from "source/core/game-object";
 import Hud from "./hud";
 import { AmbientLight, LightManager, Mesh, Shader } from "source/canvas-3d";
-import { Resources } from "source/core";
+import { Container, Resources } from "source/core";
 import { ColorTexture, ImageTexture } from "source/canvas-3d/textures";
 import { Material } from "source/canvas-3d/materials";
 import { UboBindPointManager, UboDataType } from "source/canvas-3d/ubo-bind-point-manager";
@@ -116,8 +116,9 @@ export default class Cube extends Game {
 
                 const modelManager = new ModelManager(10000);
 
+                const models = new Container();
                 const extraCubes = [];
-                for (let x = 0; x < 1000; x++) {
+                for (let x = 0; x < 100; x++) {
                     const rotation = quat.create();
                     quat.rotateX(rotation, rotation, (-Math.PI / 2) * Math.random());
                     quat.rotateY(rotation, rotation, (-Math.PI / 2) * Math.random());
@@ -136,10 +137,49 @@ export default class Cube extends Game {
                             velocity: vec3.fromValues(0, 0, 0),
                             pivot: vec3.fromValues(0, 0, 0),
                             rotation,
-                            mesh: cubeMesh //Math.round(Math.random()) == 0 ? cubeMesh : sphereMesh
+                            mesh: Math.round(Math.random()) == 0 ? cubeMesh : sphereMesh
                         })
                     );
                 }
+                models.children = extraCubes;
+                for (let i = 1; i < 10; i++) {
+                    setTimeout(() => {
+                        for (let x = 100 * i; x < (i + 1) * 100; x++) {
+                            const rotation = quat.create();
+                            quat.rotateX(rotation, rotation, (-Math.PI / 2) * Math.random());
+                            quat.rotateY(rotation, rotation, (-Math.PI / 2) * Math.random());
+                            quat.rotateZ(rotation, rotation, (-Math.PI / 2) * Math.random());
+
+                            this.addGameObject(
+                                new ShapeEntity({
+                                    scale: vec3.fromValues(1, 1, 1),
+                                    mass: 1,
+                                    position: vec3.fromValues(
+                                        (-5 + (x % 10)) * 4,
+                                        (-5 + Math.floor((x % 100) / 10)) * 4,
+                                        5 + (-5 + -Math.floor(x / 100)) * 4
+                                    ),
+                                    center: vec3.fromValues(0, 0, 0),
+                                    velocity: vec3.fromValues(0, 0, 0),
+                                    pivot: vec3.fromValues(0, 0, 0),
+                                    rotation,
+                                    mesh: Math.round(Math.random()) == 0 ? cubeMesh : sphereMesh
+                                }),
+                                models
+                            );
+                        }
+                    }, i * 1000);
+                }
+                setTimeout(() => {
+                    for (let i = 0; i < 1000; i++) {
+                        setTimeout(() => {
+                            this.removeGameObject(
+                                models.children[Math.floor(models.children.length * Math.random())]
+                            );
+                        }, 100 * i);
+                    }
+                }, 10000);
+
                 worldObjects.push(
                     bindPointManager,
                     lightManager,
@@ -173,7 +213,7 @@ export default class Cube extends Game {
                         // rotation: quat.rotateX(quat.create(), quat.create(), -Math.PI / 2)
                         mesh: sphereMesh
                     }),
-                    ...extraCubes,
+                    models,
                     modelManager
                 );
 
@@ -190,8 +230,6 @@ export default class Cube extends Game {
                 cubeTexture.init(camera);
                 sphereTexture.init(camera);
                 cubeShader.init(camera);
-                cubeMesh.init(camera);
-                sphereMesh.init(camera);
                 lightManager.init(camera);
 
                 canvas.addEventListener("contextmenu", function (e) {

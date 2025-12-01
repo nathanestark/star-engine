@@ -1,9 +1,8 @@
-import { mat3, mat4, quat, vec3 } from "gl-matrix";
-import * as Math3D from "../canvas-3d/math-3d";
+import { quat, vec3 } from "gl-matrix";
 import GameObject from "source/core/game-object";
 import DefaultCamera from "./default-camera";
 import { RefreshTime } from "source/core/types";
-import { BasicBuffers, GameObject3D, initializeBasicBuffers, Mesh, Model } from "source/canvas-3d";
+import { GameObject3D, Mesh, Model } from "source/canvas-3d";
 
 export interface ShapeEntityProperties {
     position?: vec3;
@@ -116,6 +115,6 @@ export default class ShapeEntity extends GameObject implements GameObject3D {
     }
 
     draw(camera: DefaultCamera, time: RefreshTime) {
-        // this.model.draw(camera, time);
+        this.model.draw(camera, time);
     }
 }

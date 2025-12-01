@@ -1,20 +1,21 @@
-import { vec3 } from "gl-matrix";
 import { GameObject, RefreshTime } from "source/core";
 import { Model } from "./model";
 import Canvas3DCamera from "../cameras/canvas-3d-camera";
-import { UboBindPoint } from "../ubo-bind-point-manager";
 import { Mesh } from "../meshes";
 
-export class ModelManager extends GameObject {
-    private renderGroups: Map<string, Array<Model>>;
+interface InstancedGroup {
+    id: string;
+    models: Array<Model>;
+    mesh: Mesh;
+    vao?: WebGLVertexArrayObject;
+    instanceBuffer?: WebGLBuffer;
+}
 
+export class ModelManager extends GameObject {
+    private renderGroups: Map<string, InstancedGroup>;
     private maxInstances: number;
 
-    private instanceBuffer: WebGLBuffer;
-
-    private modelChanged = true;
-
-    constructor(maxInstances: number = 10000) {
+    constructor(maxInstances: number = 100) {
         super();
 
         this.classTags = ["modelManager"];
@@ -50,21 +51,28 @@ export class ModelManager extends GameObject {
         if (!gameObject.classTags?.includes("model")) return;
 
         this.addModel(gameObject as Model);
-
-        // Recompute
-        this.modelChanged = true;
     }
 
-    private getRenderGroupId(model: Model) {
-        return `${model.meshId}_${model.shader.id}`;
+    private getRenderGroupId(mesh: Mesh) {
+        return `${mesh.id}_${mesh.shader.id}`;
     }
 
     private addModel(model: Model) {
-        const groupId = this.getRenderGroupId(model);
+        const groupId = this.getRenderGroupId(model.mesh);
 
-        const entry = this.renderGroups.get(groupId) || [];
+        let entry: InstancedGroup = this.renderGroups.get(groupId);
+        if (!entry) {
+            entry = {
+                id: groupId,
+                mesh: model.mesh,
+                models: []
+            };
+        }
 
-        entry.push(model);
+        entry.models.push(model);
+        // Clear VAO and instance buffer to force them to recompute.
+        entry.vao = null;
+        entry.instanceBuffer = null;
 
         this.renderGroups.set(groupId, entry);
     }
@@ -76,83 +84,68 @@ export class ModelManager extends GameObject {
         const model = gameObject as Model;
 
         this.removeModel(model);
-
-        // Recompute.
-        this.modelChanged = true;
     }
 
     private removeModel(model: Model) {
-        const groupId = this.getRenderGroupId(model);
+        const groupId = this.getRenderGroupId(model.mesh);
 
         let entry = this.renderGroups.get(groupId);
         if (!entry) return;
 
-        entry = entry.filter((existingModel) => existingModel.id != model.id);
+        entry.models = entry.models.filter((existingModel) => existingModel.id != model.id);
+        // Clear VAO and instance buffer to force them to recompute.
+        entry.vao = null;
+        entry.instanceBuffer = null;
 
-        if (entry.length) {
-            this.renderGroups.set(groupId, entry);
-        } else {
+        if (!entry.models.length) {
             this.renderGroups.delete(groupId);
         }
     }
 
-    // init({ context: gl }: Canvas3DCamera, group: Array<Model>) {
-    //     if (!group.length) return;
-
-    //     // if (!this.instanceBuffer) {
-    //     //     this.instanceBuffer = gl.createBuffer();
-    //     //     gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
-    //     //     gl.bufferData(gl.ARRAY_BUFFER, 64 * this.maxInstances, gl.DYNAMIC_DRAW);
-    //     // } else {
-    //     //     gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
-    //     // }
-
-    //     // gl.bindVertexArray(group[0].vao);
-    //     // const loc = group[0].shader.attribLocations.modelMatrix;
-
-    //     // for (let i = 0; i > 4; i++) {
-    //     //     const l = loc + i;
-    //     //     gl.enableVertexAttribArray(l);
-    //     //     gl.vertexAttribPointer(l, 4, gl.FLOAT, false, 64, i * 16);
-    //     //     gl.vertexAttribDivisor(l, group[0].meshSize); // 1?
-    //     // }
-
-    //     // Replace each model's worldMatrix with a segment of the
-    //     // instanceData array.
-    //     group.forEach((model, i) => {
-    //         // const offset = i * 16;
-    //         // model.worldMatrix = this.instanceData.subarray(offset, offset + 16);
-    //         model.instanceIndex = i;
-    //     });
-    // }
-
-    draw(camera: Canvas3DCamera, time: RefreshTime): void {
+    draw(camera: Canvas3DCamera, _time: RefreshTime): void {
         const { context: gl } = camera;
 
-        let offset = 0;
         this.renderGroups.forEach((group) => {
-            if (!group.length) return;
+            if (!group.models.length) return;
 
-            // Apply this groups program, textures, vao.
-            group[0].apply(camera);
+            // Apply this groups program and textures.
+            group.mesh.apply(camera);
 
-            // this.init(camera, group);
-            // If we need to reinitialize, do so.
-            // if (this.modelChanged) {
-            // this.init(camera);
-            //     this.modelChanged = false;
-            // } else {
-            //     gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
-            // }
+            // Decide if we need to initialize the group
+            if (!group.vao) {
+                group.vao = gl.createVertexArray();
+                gl.bindVertexArray(group.vao);
 
-            group.forEach((model, i) => {
-                // Anything to do here? Ideally each model is writing
-                // its worldMatrix directly to the instanceData array.
-                model.managerDraw(camera, time, i);
+                group.mesh.init(camera);
+
+                if (!group.instanceBuffer) {
+                    group.instanceBuffer = gl.createBuffer();
+                    gl.bindBuffer(gl.ARRAY_BUFFER, group.instanceBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, 64 * group.models.length, gl.DYNAMIC_DRAW);
+                } else {
+                    gl.bindBuffer(gl.ARRAY_BUFFER, group.instanceBuffer);
+                }
+
+                const loc = group.mesh.shader.attribLocations.modelMatrix;
+                for (let i = 0; i < 4; i++) {
+                    const l = loc + i;
+                    gl.enableVertexAttribArray(l);
+                    gl.vertexAttribPointer(l, 4, gl.FLOAT, false, 64, i * 16);
+                    gl.vertexAttribDivisor(l, 1);
+                }
+            } else {
+                // If not, bind vao and buffer
+                gl.bindVertexArray(group.vao);
+                gl.bindBuffer(gl.ARRAY_BUFFER, group.instanceBuffer);
+            }
+
+            // Buffer world data per model
+            group.models.forEach((model, i) => {
+                gl.bufferSubData(gl.ARRAY_BUFFER, i * 64, model.worldMatrix as Float32Array);
             });
 
-            gl.drawArraysInstanced(gl.TRIANGLES, 0, group[0].meshSize, group.length);
-            offset += group[0].meshSize;
+            // Draw them all
+            gl.drawArraysInstanced(gl.TRIANGLES, 0, group.mesh.size / 3, group.models.length);
         });
 
         gl.bindVertexArray(null);

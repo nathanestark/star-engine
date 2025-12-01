@@ -1,7 +1,6 @@
-import { Camera, GameObject, RefreshTime } from "source/core";
+import { GameObject } from "source/core";
 import Canvas3DCamera from "../cameras/canvas-3d-camera";
 import { Material } from "../materials";
-import { mat4, quat, vec3 } from "gl-matrix";
 
 import { Cube } from "./predefinedMeshes/cube";
 import { Sphere } from "./predefinedMeshes/sphere";
@@ -26,8 +25,6 @@ export class Mesh extends GameObject {
     private verticiesBuffer: WebGLBuffer;
     private normalsBuffer: WebGLBuffer;
     private uvsBuffer: WebGLBuffer;
-
-    private _vao: WebGLVertexArrayObject;
 
     constructor({ verticies, normals, uvs, material }: MeshProperties) {
         super();
@@ -83,55 +80,42 @@ export class Mesh extends GameObject {
         return this.material.uniformBlocks;
     }
 
-    get vao() {
-        return this._vao;
-    }
-
-    instanceBuffer: WebGLBuffer;
     init({ context: gl }: Canvas3DCamera) {
-        this._vao = gl.createVertexArray();
-        gl.bindVertexArray(this.vao);
-
-        this.verticiesBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.verticiesBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.verticies, gl.STATIC_DRAW);
+        if (!this.verticiesBuffer) {
+            this.verticiesBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.verticiesBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, this.verticies, gl.STATIC_DRAW);
+        } else {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.verticiesBuffer);
+        }
         gl.vertexAttribPointer(this.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(this.attribLocations.vertexPosition);
 
-        this.normalsBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.normalsBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
+        if (!this.normalsBuffer) {
+            this.normalsBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.normalsBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
+        } else {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.normalsBuffer);
+        }
         gl.vertexAttribPointer(this.attribLocations.vertexNormal, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(this.attribLocations.vertexNormal);
 
-        this.uvsBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.uvsBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
+        if (!this.uvsBuffer) {
+            this.uvsBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.uvsBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
+        } else {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.uvsBuffer);
+        }
         gl.vertexAttribPointer(this.attribLocations.uv, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(this.attribLocations.uv);
 
-        this.instanceBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, 64 * 10000, gl.DYNAMIC_DRAW);
-
-        const loc = this.attribLocations.modelMatrix;
-        for (let i = 0; i < 4; i++) {
-            const l = loc + i;
-            gl.enableVertexAttribArray(l);
-            gl.vertexAttribPointer(l, 4, gl.FLOAT, false, 64, i * 16);
-            gl.vertexAttribDivisor(l, 1); // 1?
-        }
-
         // Unbind buffer when we're all done.
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
-        gl.bindVertexArray(null);
     }
 
     apply(camera: Canvas3DCamera): void {
-        const { context: gl } = camera;
-
         this.material.apply(camera);
-        gl.bindVertexArray(this.vao);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
     }
 }

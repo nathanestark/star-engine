@@ -122,4 +122,4 @@ function generateSphere(
     return sphere;
 }
 
-export const Sphere = generateSphere(1, 64, 64);
+export const Sphere = generateSphere(1, 32, 32);
