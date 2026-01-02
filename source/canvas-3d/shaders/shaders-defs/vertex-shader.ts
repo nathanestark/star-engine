@@ -8,12 +8,12 @@ export default {
             target: "aVertexPosition"
         },
         {
-            name: "vertexNormal",
-            target: "aVertexNormal"
-        },
-        {
             name: "uv",
             target: "aUV"
+        },
+        {
+            name: "vertexNormal",
+            target: "aVertexNormal"
         },
         {
             name: "modelMatrix",
@@ -39,10 +39,10 @@ export default {
     source: `#version 300 es
       precision highp float;
 
-      in vec3 aVertexPosition; // Doesn't need to be vec4. Use vec3
-      in vec3 aVertexNormal;
-      in vec2 aUV;
-      in mat4 aModelMatrix;
+      layout(location = 0) in vec3 aVertexPosition;
+      layout(location = 1) in vec2 aUV;
+      layout(location = 2) in vec3 aVertexNormal;
+      layout(location = 3) in mat4 aModelMatrix;
             
       layout (std140) uniform uboCamera {
         mat4 uViewMatrix;

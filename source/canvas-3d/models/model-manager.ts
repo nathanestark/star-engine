@@ -145,7 +145,13 @@ export class ModelManager extends GameObject {
             });
 
             // Draw them all
-            gl.drawArraysInstanced(gl.TRIANGLES, 0, group.mesh.size / 3, group.models.length);
+            gl.drawElementsInstanced(
+                gl.TRIANGLES,
+                group.mesh.size,
+                gl.UNSIGNED_SHORT,
+                0,
+                group.models.length
+            );
         });
 
         gl.bindVertexArray(null);

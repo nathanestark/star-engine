@@ -5,40 +5,39 @@ import { Material } from "../materials";
 import { Cube } from "./predefinedMeshes/cube";
 import { Sphere } from "./predefinedMeshes/sphere";
 
-function isValidArray(array: Float32Array | Array<number>): boolean {
-    return array && (array instanceof Array || array instanceof Float32Array) && array.length > 0;
+function isValidArray(array: Float32Array | Uint16Array | Array<number>): boolean {
+    return (
+        array &&
+        (array instanceof Array || array instanceof Float32Array || array instanceof Uint16Array) &&
+        array.length > 0
+    );
 }
 
 export interface MeshProperties {
     verticies: Float32Array | Array<number>;
-    normals: Float32Array | Array<number>;
-    uvs: Float32Array | Array<number>;
+    indices: Uint16Array | Array<number>;
     material: Material;
 }
 
 export class Mesh extends GameObject {
     private verticies: Float32Array;
-    private normals: Float32Array;
-    private uvs: Float32Array;
+    private indices: Uint16Array;
     private material: Material;
 
     private verticiesBuffer: WebGLBuffer;
-    private normalsBuffer: WebGLBuffer;
-    private uvsBuffer: WebGLBuffer;
+    private indicesBuffer: WebGLBuffer;
 
-    constructor({ verticies, normals, uvs, material }: MeshProperties) {
+    constructor({ verticies, indices, material }: MeshProperties) {
         super();
 
         this.classTags = ["mesh"];
 
         if (!isValidArray(verticies)) throw new Error("Invalid 'verticies'");
-        if (!isValidArray(normals)) throw new Error("Invalid 'normals'");
-        if (!isValidArray(uvs)) throw new Error("Invalid 'uvs'");
+        if (!isValidArray(indices)) throw new Error("Invalid 'indices'");
 
         this.verticies =
             verticies instanceof Float32Array ? verticies : new Float32Array(verticies);
-        this.normals = normals instanceof Float32Array ? normals : new Float32Array(normals);
-        this.uvs = uvs instanceof Float32Array ? uvs : new Float32Array(uvs);
+        this.indices = indices instanceof Uint16Array ? indices : new Uint16Array(indices);
         this.material = material;
     }
 
@@ -57,7 +56,7 @@ export class Mesh extends GameObject {
     }
 
     get size() {
-        return this.verticies.length;
+        return this.indices.length;
     }
 
     get program() {
@@ -81,6 +80,8 @@ export class Mesh extends GameObject {
     }
 
     init({ context: gl }: Canvas3DCamera) {
+        // Model manager is managing the VAO.
+
         if (!this.verticiesBuffer) {
             this.verticiesBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.verticiesBuffer);
@@ -88,28 +89,23 @@ export class Mesh extends GameObject {
         } else {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.verticiesBuffer);
         }
-        gl.vertexAttribPointer(this.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
+
+        if (!this.indicesBuffer) {
+            this.indicesBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indicesBuffer);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
+        } else {
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indicesBuffer);
+        }
+
+        gl.vertexAttribPointer(this.attribLocations.vertexPosition, 3, gl.FLOAT, false, 32, 0);
         gl.enableVertexAttribArray(this.attribLocations.vertexPosition);
 
-        if (!this.normalsBuffer) {
-            this.normalsBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.normalsBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
-        } else {
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.normalsBuffer);
-        }
-        gl.vertexAttribPointer(this.attribLocations.vertexNormal, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(this.attribLocations.vertexNormal);
-
-        if (!this.uvsBuffer) {
-            this.uvsBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.uvsBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
-        } else {
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.uvsBuffer);
-        }
-        gl.vertexAttribPointer(this.attribLocations.uv, 2, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(this.attribLocations.uv, 2, gl.FLOAT, false, 32, 12);
         gl.enableVertexAttribArray(this.attribLocations.uv);
+
+        gl.vertexAttribPointer(this.attribLocations.vertexNormal, 3, gl.FLOAT, false, 32, 20);
+        gl.enableVertexAttribArray(this.attribLocations.vertexNormal);
 
         // Unbind buffer when we're all done.
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
