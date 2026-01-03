@@ -32,6 +32,7 @@
         "webpack-dev-server": "^5.2.1"
     },
     "dependencies": {
-        "buffer": "^6.0.3"
+        "buffer": "^6.0.3",
+        "d3-geo-voronoi": "^2.1.0"
     }
 }
