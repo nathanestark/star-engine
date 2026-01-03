@@ -28,7 +28,7 @@ export default class Cube extends Game {
 
         // Load images.
         this.resources
-            .load([{ type: "image", path: "images/cube.png", names: ["cube"] }])
+            .load([{ type: "image", path: "images/cube.png", names: ["cube"] }, { type: "image", path: "images/earth.png", names: ["earth"] }])
             .then(() => {
                 const context = canvas.getContext("webgl2");
 
@@ -79,7 +79,7 @@ export default class Cube extends Game {
 
                 // Create a material
                 const cubeTexture = new ImageTexture(this.resources.get("cube").image);
-                const sphereTexture = new ColorTexture("#fff");
+                const sphereTexture = new ImageTexture(this.resources.get("earth").image);
                 const cubeShader = Shader.createBasicShader(bindPointManager);
                 const cubeMaterial = new Material({
                     textures: [
